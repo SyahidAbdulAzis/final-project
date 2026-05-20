@@ -1,0 +1,23 @@
+export type SortBy = 'name' | 'price';
+export type Order = 'asc' | 'desc';
+
+export type PropertyQuery = {
+  page: number;
+  take: number;
+  city: string;
+  name: string;
+  category: string;
+  sortBy: SortBy;
+  order: Order;
+};
+
+export type PropertyItem = {
+  id: number;
+  name: string;
+  city: string;
+  category: string;
+  description: string;
+  price: number;
+  imageUrl: string;
+  available: boolean;
+};
