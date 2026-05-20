@@ -22,3 +22,8 @@ pnpm-debug.log*
 Thumbs.db
 .vscode/
 .idea/
+
+# internal docs and workflow
+.windsurf/
+docs/
+AGENTS.md
