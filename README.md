@@ -21,11 +21,3 @@ Monorepo aplikasi untuk scope Fitur 1:
 
 - Frontend: `npm run dev` di `apps/web`
 - Backend: `npm run dev` di `apps/api`
-
-## Catatan Git
-
-Sebelum push ke GitHub, pastikan file internal tidak ikut track:
-
-- `.windsurf/`
-- `docs/`
-- `AGENTS.md`
