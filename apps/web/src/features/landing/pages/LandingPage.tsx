@@ -13,17 +13,23 @@ const initialQuery: PropertyQuery = {
   duration: 1,
   page: 1,
   take: 6,
-  name: '',
-  category: 'Semua',
-  sortBy: 'name',
-  order: 'asc',
 };
 
 export function LandingPage() {
   const [query, setState] = useState(initialQuery);
-  const { data, meta, loading } = useProperties(query);
+  const { data, loading } = useProperties(query);
   const setQuery = (next: Partial<PropertyQuery>) => setState((prev) => ({ ...prev, ...next }));
+
   return (
-    <div className="layout"><Navbar /><main><HeroSection /><SearchForm query={query} setQuery={setQuery} /><PropertyList loading={loading} items={data} meta={meta} query={query} setQuery={setQuery} /></main><Footer /></div>
+    <div className="layout">
+      <Navbar />
+      <main className="page-main">
+        <HeroSection>
+          <SearchForm query={query} setQuery={setQuery} />
+        </HeroSection>
+        <PropertyList loading={loading} items={data} />
+      </main>
+      <Footer />
+    </div>
   );
 }
