@@ -1,20 +1,10 @@
-import { useEffect, useId, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { SearchForm } from '../../features/landing/components/SearchForm';
+import type { PropertyQuery } from '../../types/property';
 
-const links = [
-  { label: 'Beranda', href: '#beranda' },
-  { label: 'Properti', href: '#properti' },
-];
-
-type MenuProps = {
-  open: boolean;
-  menuId: string;
-  closeMenu: () => void;
-};
-
-type ButtonProps = {
-  open: boolean;
-  menuId: string;
-  toggleMenu: () => void;
+type Props = {
+  query: PropertyQuery;
+  setQuery: (next: Partial<PropertyQuery>) => void;
 };
 
 function Brand() {
@@ -25,77 +15,45 @@ function Brand() {
   );
 }
 
-function NavLinks({ activeHash }: { activeHash: string }) {
-  return (
-    <nav className="nav-links" aria-label="Navigasi utama">
-      {links.map((link) => (
-        <a
-          key={link.label}
-          href={link.href}
-          className={activeHash === link.href ? 'is-active' : ''}
-          aria-current={activeHash === link.href ? 'page' : undefined}
-        >
-          {link.label}
-        </a>
-      ))}
-    </nav>
-  );
-}
-
-function AccountMenu({ open, menuId, closeMenu }: MenuProps) {
-  if (!open) return null;
-  return (
-    <div id={menuId} className="account-menu glass-card" role="menu" aria-label="Menu akun">
-      {links.map((link) => (
-        <a key={link.label} href={link.href} role="menuitem" onClick={closeMenu}>{link.label}</a>
-      ))}
-    </div>
-  );
-}
-
-function MenuButton({ open, menuId, toggleMenu }: ButtonProps) {
-  return (
-    <button
-      className="btn-icon"
-      type="button"
-      aria-label="Menu akun"
-      aria-controls={menuId}
-      aria-expanded={open}
-      onClick={toggleMenu}
-    >☰</button>
-  );
-}
-
 function Actions() {
-  const [open, setOpen] = useState(false);
-  const menuId = useId();
-  const closeMenu = () => setOpen(false);
-  const toggleMenu = () => setOpen((prev) => !prev);
+  const [menuOpen, setMenuOpen] = useState(false);
+
   return (
     <div className="nav-actions">
-      <a href="#login" className="btn-ghost">Masuk</a>
-      <MenuButton open={open} menuId={menuId} toggleMenu={toggleMenu} />
-      <AccountMenu open={open} menuId={menuId} closeMenu={closeMenu} />
+      <button className="host-link" type="button">Menjadi Tuan Rumah</button>
+      <div className="account-dropdown">
+        <button
+          className="account-trigger"
+          type="button"
+          aria-label="Buka menu akun"
+          aria-expanded={menuOpen}
+          onClick={() => setMenuOpen((prev) => !prev)}
+        >
+          <svg className="menu-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="3" y1="12" x2="21" y2="12" />
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <line x1="3" y1="18" x2="21" y2="18" />
+          </svg>
+        </button>
+        {menuOpen && (
+          <div className="account-menu glass-card">
+            <a href="#login" className="account-item">Masuk atau mendaftar</a>
+            <div className="account-divider" />
+            <a href="#host" className="account-item">Menjadi Tuan Rumah</a>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
 
-export function Navbar() {
+export function Navbar({ query, setQuery }: Props) {
   const [scrolled, setScrolled] = useState(false);
-  const [activeHash, setActiveHash] = useState('#beranda');
 
   useEffect(() => {
     const onScroll = () => {
       setScrolled(window.scrollY > 8);
-      const propertiSection = document.getElementById('properti');
-      if (!propertiSection) {
-        setActiveHash('#beranda');
-        return;
-      }
-      const propertiTop = propertiSection.getBoundingClientRect().top;
-      setActiveHash(propertiTop <= 120 ? '#properti' : '#beranda');
     };
-    onScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
@@ -104,7 +62,7 @@ export function Navbar() {
     <header id="beranda" className={scrolled ? 'navbar scrolled' : 'navbar'}>
       <div className="nav-shell glass-card">
         <Brand />
-        <NavLinks activeHash={activeHash} />
+        <SearchForm query={query} setQuery={setQuery} />
         <Actions />
       </div>
     </header>

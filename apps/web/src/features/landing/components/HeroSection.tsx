@@ -1,36 +1,34 @@
 import { useAutoSlide } from '../../../hooks/useAutoSlide';
-import type { ReactNode } from 'react';
 
 const slides = [
   {
-    title: 'Tinggal Lebih Nyaman, Pesan Lebih Cepat',
-    subtitle: 'Temukan properti terbaik untuk liburan, kerja remote, atau perjalanan bisnis.',
+    title: 'Temukan tempat nyaman untuk setiap perjalanan liburan maupun bisnis Anda',
+    subtitle: 'Pilih properti terbaik tanpa ribet.',
   },
   {
-    title: 'Atur Rencana Perjalanan Dalam Sekali Cari',
-    subtitle: 'Pilih destinasi, tanggal check-in, dan durasi secara fleksibel dari satu halaman.',
+    title: 'Semua kebutuhan menginap dalam satu pencarian yang mudah dan cepat',
+    subtitle: 'Atur destinasi, tanggal, dan jumlah tamu dari navbar.',
   },
   {
-    title: 'Harga Harian Lebih Transparan',
-    subtitle: 'Bandingkan listing properti dengan filter dan urutan yang kamu butuhkan.',
+    title: 'Harga transparan dengan pilihan properti yang lebih relevan dan akurat',
+    subtitle: 'Bandingkan listing yang tersedia sesuai kebutuhanmu.',
   },
 ];
 
-type Props = {
-  children?: ReactNode;
-};
-
-export function HeroSection({ children }: Props) {
+export function HeroSection() {
   const current = useAutoSlide(slides.length);
   const slide = slides[current];
   return (
-    <section className="hero" aria-label="Hero carousel">
+    <section className="hero" aria-label="Hero section">
       <div className="hero-inner">
         <div className="hero-content">
+          <svg className="hero-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+            <polyline points="9 22 9 12 15 12 15 22" />
+          </svg>
           <h1>{slide.title}</h1>
           <p>{slide.subtitle}</p>
         </div>
-        <div className="hero-search-slot">{children}</div>
       </div>
     </section>
   );

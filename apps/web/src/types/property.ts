@@ -1,7 +1,8 @@
 export type PropertyQuery = {
   city: string;
   checkIn: string;
-  duration: number;
+  checkOut: string;
+  guests: number;
   page: number;
   take: number;
 };
