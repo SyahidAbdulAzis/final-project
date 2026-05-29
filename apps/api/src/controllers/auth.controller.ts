@@ -38,12 +38,12 @@ function pickParam(value: string | string[] | undefined) {
   return value || '';
 }
 
-export function registerHandler(req: Request, res: Response) {
+export async function registerHandler(req: Request, res: Response) {
   const roleParsed = parseOrBad(res, roleParamSchema, req.params);
   const bodyParsed = parseOrBad(res, registerSchema, req.body);
   if (!roleParsed || !bodyParsed) return;
   try {
-    return res.status(201).json(registerAccount(bodyParsed.email, roleParsed.role));
+    return res.status(201).json(await registerAccount(bodyParsed.email, roleParsed.role));
   } catch (error) {
     return badRequest(res, (error as Error).message);
   }
@@ -70,21 +70,21 @@ export async function loginHandler(req: Request, res: Response) {
   }
 }
 
-export function resendHandler(req: Request, res: Response) {
+export async function resendHandler(req: Request, res: Response) {
   const bodyParsed = parseOrBad(res, emailOnlySchema, req.body);
   if (!bodyParsed) return;
   try {
-    return res.json(resendVerification(bodyParsed.email));
+    return res.json(await resendVerification(bodyParsed.email));
   } catch (error) {
     return badRequest(res, (error as Error).message);
   }
 }
 
-export function forgotPasswordHandler(req: Request, res: Response) {
+export async function forgotPasswordHandler(req: Request, res: Response) {
   const bodyParsed = parseOrBad(res, emailOnlySchema, req.body);
   if (!bodyParsed) return;
   try {
-    return res.json(requestResetPassword(bodyParsed.email));
+    return res.json(await requestResetPassword(bodyParsed.email));
   } catch (error) {
     return badRequest(res, (error as Error).message);
   }
@@ -100,23 +100,23 @@ export async function resetPasswordHandler(req: Request, res: Response) {
   }
 }
 
-export function profileGetHandler(req: Request, res: Response) {
+export async function profileGetHandler(req: Request, res: Response) {
   const email = pickParam(req.params.email);
   if (!email) return badRequest(res, 'Email wajib diisi');
   try {
-    return res.json(getProfile(email));
+    return res.json(await getProfile(email));
   } catch (error) {
     return badRequest(res, (error as Error).message);
   }
 }
 
-export function profilePatchHandler(req: Request, res: Response) {
+export async function profilePatchHandler(req: Request, res: Response) {
   const bodyParsed = parseOrBad(res, profileSchema, req.body);
   const email = pickParam(req.params.email);
   if (!email) return badRequest(res, 'Email wajib diisi');
   if (!bodyParsed) return;
   try {
-    return res.json(updateProfile(email, bodyParsed.fullName, bodyParsed.photoUrl));
+    return res.json(await updateProfile(email, bodyParsed.fullName, bodyParsed.photoUrl));
   } catch (error) {
     return badRequest(res, (error as Error).message);
   }
