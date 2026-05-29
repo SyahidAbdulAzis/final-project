@@ -14,5 +14,5 @@ app.use('/api', authRouter);
 app.use('/api', propertyRouter);
 
 app.listen(port, () => {
-  process.stdout.write(`API ready at http://localhost:${port}\n`);
+  process.stdout.write(`API ready bossku at http://localhost:${port}\n`);
 });
