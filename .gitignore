@@ -24,6 +24,6 @@ Thumbs.db
 .idea/
 
 # Internal workflow docs (add back before GitHub update)
-.windsurf/
-docs/
-AGENTS.md
+# .windsurf/
+# docs/
+# AGENTS.md
