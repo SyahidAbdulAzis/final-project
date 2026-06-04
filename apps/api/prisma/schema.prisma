@@ -7,221 +7,44 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum Role {
-  USER
-  TENANT
-}
-
-enum TokenPurpose {
-  VERIFICATION
-  RESET_PASSWORD
-}
-
-enum BookingStatus {
-  MENUNGGU_PEMBAYARAN
-  MENUNGGU_KONFIRMASI
-  DIKONFIRMASI
-  DIBATALKAN
-  KADALUARSA
-}
-
-enum AdjustmentType {
-  NOMINAL
-  PERCENTAGE
-}
-
 model User {
-  id           String        @id @default(cuid())
-  email        String        @unique
-  passwordHash String
-  fullName     String
-  photoUrl     String
-  role         Role          @default(USER)
-  isVerified   Boolean       @default(false)
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-
-  properties      Property[]
-  bookings        Booking[]
-  reviews         Review[]
-  salesReports    SalesReport[]
-  authTokens      AuthToken[]
-}
-
-model AuthToken {
-  id        String        @id @default(cuid())
-  email     String
-  token     String        @unique
-  purpose   TokenPurpose
-  expiresAt DateTime
-  used      Boolean       @default(false)
-  createdAt DateTime      @default(now())
-
-  user User @relation(fields: [email], references: [email])
-
-  @@index([email])
-  @@index([token])
+  id         String   @id @default(cuid())
+  email      String   @unique
+  role       String
+  isVerified Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
 
 model PropertyCategory {
-  id        String      @id @default(cuid())
-  name      String      @unique
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
-
+  id        String     @id @default(cuid())
+  name      String     @unique
   properties Property[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
 }
 
 model Property {
-  id          String            @id @default(cuid())
+  id          String           @id @default(cuid())
   name        String
   city        String
-  address     String
-  province    String
-  latitude    Float
-  longitude   Float
   description String
+  imageUrl    String
   tenantId    String
   categoryId  String
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
-
-  tenant      User              @relation(fields: [tenantId], references: [id])
-  category    PropertyCategory  @relation(fields: [categoryId], references: [id])
-  images      PropertyImage[]
+  category    PropertyCategory @relation(fields: [categoryId], references: [id])
   rooms       Room[]
-  salesReports SalesReport[]
-
-  @@index([city])
-  @@index([tenantId])
-}
-
-model PropertyImage {
-  id         String   @id @default(cuid())
-  propertyId String
-  url        String
-  order      Int      @default(0)
-  createdAt  DateTime @default(now())
-
-  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
-
-  @@index([propertyId])
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
 }
 
 model Room {
-  id          String             @id @default(cuid())
+  id          String   @id @default(cuid())
   propertyId  String
   name        String
   description String
   basePrice   Int
-  maxGuests   Int                @default(2)
-  createdAt   DateTime           @default(now())
-  updatedAt   DateTime           @updatedAt
-
-  property         Property         @relation(fields: [propertyId], references: [id], onDelete: Cascade)
-  availabilities   RoomAvailability[]
-  seasonalRates    SeasonalRate[]
-  bookings         Booking[]
-  salesReports     SalesReport[]
-
-  @@index([propertyId])
-}
-
-model RoomAvailability {
-  id          String   @id @default(cuid())
-  roomId      String
-  date        DateTime
-  isAvailable Boolean  @default(true)
+  property    Property @relation(fields: [propertyId], references: [id])
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-
-  room Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
-
-  @@unique([roomId, date])
-}
-
-model SeasonalRate {
-  id              String         @id @default(cuid())
-  roomId          String
-  name            String
-  startDate       DateTime
-  endDate         DateTime
-  adjustmentType  AdjustmentType
-  adjustmentValue Int
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
-
-  room Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
-
-  @@index([roomId, startDate, endDate])
-}
-
-model Booking {
-  id         String        @id @default(cuid())
-  userId     String
-  roomId     String
-  checkIn    DateTime
-  checkOut   DateTime
-  totalPrice Int
-  status     BookingStatus @default(MENUNGGU_PEMBAYARAN)
-  createdAt  DateTime      @default(now())
-  updatedAt  DateTime      @updatedAt
-
-  user    User     @relation(fields: [userId], references: [id])
-  room    Room     @relation(fields: [roomId], references: [id])
-  payment Payment?
-  reviews Review[]
-
-  @@index([userId])
-  @@index([roomId])
-  @@index([status])
-}
-
-model Payment {
-  id          String   @id @default(cuid())
-  bookingId   String   @unique
-  proofUrl    String
-  uploadedAt  DateTime @default(now())
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
-}
-
-model Review {
-  id          String    @id @default(cuid())
-  bookingId   String    @unique
-  userId      String
-  rating      Int
-  comment     String
-  tenantReply String?
-  repliedAt   DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
-  user    User    @relation(fields: [userId], references: [id])
-
-  @@index([userId])
-}
-
-model SalesReport {
-  id            String   @id @default(cuid())
-  tenantId      String
-  propertyId    String
-  roomId        String
-  month         Int
-  year          Int
-  totalIncome   Int
-  totalBookings Int
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  tenant   User     @relation(fields: [tenantId], references: [id])
-  property Property @relation(fields: [propertyId], references: [id])
-  room     Room     @relation(fields: [roomId], references: [id])
-
-  @@unique([tenantId, propertyId, roomId, month, year])
-  @@index([tenantId])
-  @@index([propertyId])
 }

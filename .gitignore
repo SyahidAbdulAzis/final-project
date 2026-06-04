@@ -23,7 +23,7 @@ Thumbs.db
 .vscode/
 .idea/
 
-# Internal workflow docs (add back before GitHub update)
-# .windsurf/
-# docs/
-# AGENTS.md
+# internal docs and workflow
+.windsurf/
+docs/
+AGENTS.md

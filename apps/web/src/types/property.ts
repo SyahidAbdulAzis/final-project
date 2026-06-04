@@ -1,10 +1,16 @@
+export type SortField = 'name' | 'price';
+export type SortOrder = 'asc' | 'desc';
+
 export type PropertyQuery = {
   city: string;
   checkIn: string;
-  checkOut: string;
-  guests: number;
+  duration: number;
   page: number;
   take: number;
+  name: string;
+  category: string;
+  sortBy: SortField;
+  order: SortOrder;
 };
 
 export type PropertyItem = {
@@ -16,7 +22,6 @@ export type PropertyItem = {
   price: number;
   imageUrl: string;
   available: boolean;
-  rating?: number;
 };
 
 export type PropertyMeta = {

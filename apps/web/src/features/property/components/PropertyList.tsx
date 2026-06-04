@@ -1,125 +1,37 @@
-import type { PropertyItem } from '../../../types/property';
+import type { PropertyItem, PropertyMeta, PropertyQuery } from '../../../types/property';
 import { formatRupiah } from '../../../lib/utils';
-import { dummyCards } from '../data/dummyProperties';
 
 type Props = {
   loading: boolean;
   items: PropertyItem[];
+  meta: PropertyMeta;
+  query: PropertyQuery;
+  setQuery: (next: Partial<PropertyQuery>) => void;
 };
 
-function groupByCity(items: PropertyItem[]) {
-  return items.reduce<Record<string, PropertyItem[]>>((acc, item) => {
-    if (!acc[item.city]) acc[item.city] = [];
-    acc[item.city].push(item);
-    return acc;
-  }, {});
-}
-
-function DummyCard({ item }: { item: PropertyItem }) {
-  const isGuestChoice = item.rating && item.rating >= 4.8;
+function Filters({ query, setQuery }: Pick<Props, 'query' | 'setQuery'>) {
   return (
-    <article className="card">
-      <div className="card-media">
-        <img src={item.imageUrl} alt={item.name} />
-        {isGuestChoice && <span className="card-badge">Pilihan Tamu</span>}
-        <button className="card-favorite" aria-label="Tambahkan ke Favorit">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-          </svg>
-        </button>
-      </div>
-      <div className="card-body">
-        <h3>{item.name}</h3>
-        <p className="card-location">{item.city}</p>
-        <p className="card-meta">{item.category}</p>
-        <p className="card-price">{formatRupiah(item.price)} / malam</p>
-        {item.rating && (
-          <p className="card-rating">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-            </svg>
-            {item.rating}
-          </p>
-        )}
-      </div>
-    </article>
-  );
-}
-
-
-function Availability({ item }: { item: PropertyItem }) {
-  return <p className={item.available ? 'chip chip-open' : 'chip chip-closed'}>{item.available ? 'Bisa dipesan' : 'Penuh'}</p>;
-}
-
-function Card({ item }: { item: PropertyItem }) {
-  const isGuestChoice = item.rating && item.rating >= 4.8;
-  return (
-    <article className="card">
-      <div className="card-media">
-        <img src={item.imageUrl} alt={item.name} />
-        {isGuestChoice && <span className="card-badge">Pilihan Tamu</span>}
-        <Availability item={item} />
-        <button className="card-favorite" aria-label="Tambahkan ke Favorit">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-          </svg>
-        </button>
-      </div>
-      <div className="card-body">
-        <h3>{item.name}</h3>
-        <p className="card-location">{item.city}</p>
-        <p className="card-meta">{item.category}</p>
-        <p className="card-price">{formatRupiah(item.price)} / malam</p>
-        {item.rating && (
-          <p className="card-rating">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-            </svg>
-            {item.rating}
-          </p>
-        )}
-      </div>
-    </article>
-  );
-}
-
-function CitySection({ city, items }: { city: string; items: PropertyItem[] }) {
-  return (
-    <section className="city-section" aria-label={`Properti ${city}`}>
-      <div className="city-head">
-        <h3>Tersedia di {city}</h3>
-        <a href="#properti">Lihat semua</a>
-      </div>
-      <div className="property-grid">{items.map((item) => <Card key={item.id} item={item} />)}</div>
-    </section>
-  );
-}
-
-function Content({ loading, items }: Pick<Props, 'loading' | 'items'>) {
-  if (loading) return null;
-  if (!items.length) {
-    return (
-      <section className="city-section" aria-label="Dummy properti">
-        <div className="city-head">
-          <h3>Rekomendasi Dummy</h3>
-        </div>
-        <div className="property-grid">{dummyCards.map((item) => <DummyCard key={item.id} item={item} />)}</div>
-      </section>
-    );
-  }
-
-  const grouped = groupByCity(items);
-  return (
-    <div className="city-stack">
-      {Object.entries(grouped).map(([city, cityItems]) => <CitySection key={city} city={city} items={cityItems} />)}
+    <div className="list-filters">
+      <input placeholder="Filter nama" value={query.name} onChange={(e) => setQuery({ name: e.target.value, page: 1 })} />
+      <select value={query.category} onChange={(e) => setQuery({ category: e.target.value, page: 1 })}>{['Semua', 'Apartment', 'Hotel', 'Guest House', 'Villa'].map((x) => <option key={x}>{x}</option>)}</select>
+      <select value={query.sortBy} onChange={(e) => setQuery({ sortBy: e.target.value as PropertyQuery['sortBy'] })}><option value="name">Urut Nama</option><option value="price">Urut Harga</option></select>
+      <select value={query.order} onChange={(e) => setQuery({ order: e.target.value as PropertyQuery['order'] })}><option value="asc">Asc</option><option value="desc">Desc</option></select>
     </div>
   );
 }
 
-export function PropertyList(props: Props) {
+function Card({ item }: { item: PropertyItem }) {
   return (
-    <section id="properti" className="listing-section">
-      <Content loading={props.loading} items={props.items} />
-    </section>
+    <article className="card"><img src={item.imageUrl} alt={item.name} /><div><p>{item.city} • {item.category}</p><h3>{item.name}</h3><p>{formatRupiah(item.price)} / malam</p></div></article>
   );
+}
+
+function Pager({ meta, setQuery }: Pick<Props, 'meta' | 'setQuery'>) {
+  return (
+    <div className="pager"><button type="button" disabled={meta.page <= 1} onClick={() => setQuery({ page: meta.page - 1 })}>Prev</button><span>Hal {meta.page}/{meta.totalPages}</span><button type="button" disabled={meta.page >= meta.totalPages} onClick={() => setQuery({ page: meta.page + 1 })}>Next</button></div>
+  );
+}
+
+export function PropertyList(props: Props) {
+  return <section><Filters query={props.query} setQuery={props.setQuery} /><div className="property-grid">{props.loading ? <p>Memuat data...</p> : props.items.map((item) => <Card key={item.id} item={item} />)}</div><Pager meta={props.meta} setQuery={props.setQuery} /></section>;
 }
