@@ -7,13 +7,6 @@ type Props = {
   items: PropertyItem[];
 };
 
-function groupByCity(items: PropertyItem[]) {
-  return items.reduce<Record<string, PropertyItem[]>>((acc, item) => {
-    if (!acc[item.city]) acc[item.city] = [];
-    acc[item.city].push(item);
-    return acc;
-  }, {});
-}
 
 function DummyCard({ item }: { item: PropertyItem }) {
   const isGuestChoice = item.rating && item.rating >= 4.8;
@@ -83,35 +76,12 @@ function Card({ item }: { item: PropertyItem }) {
   );
 }
 
-function CitySection({ city, items }: { city: string; items: PropertyItem[] }) {
-  return (
-    <section className="city-section" aria-label={`Properti ${city}`}>
-      <div className="city-head">
-        <h3>Tersedia di {city}</h3>
-        <a href="#properti">Lihat semua</a>
-      </div>
-      <div className="property-grid">{items.map((item) => <Card key={item.id} item={item} />)}</div>
-    </section>
-  );
-}
-
 function Content({ loading, items }: Pick<Props, 'loading' | 'items'>) {
   if (loading) return null;
-  if (!items.length) {
-    return (
-      <section className="city-section" aria-label="Dummy properti">
-        <div className="city-head">
-          <h3>Rekomendasi Dummy</h3>
-        </div>
-        <div className="property-grid">{dummyCards.map((item) => <DummyCard key={item.id} item={item} />)}</div>
-      </section>
-    );
-  }
-
-  const grouped = groupByCity(items);
+  const displayItems = items.length ? items : dummyCards;
   return (
-    <div className="city-stack">
-      {Object.entries(grouped).map(([city, cityItems]) => <CitySection key={city} city={city} items={cityItems} />)}
+    <div className="property-grid">
+      {displayItems.map((item) => <Card key={item.id} item={item} />)}
     </div>
   );
 }

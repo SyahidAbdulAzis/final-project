@@ -12,7 +12,7 @@ const initialQuery: PropertyQuery = {
   checkOut: '',
   guests: 1,
   page: 1,
-  take: 6,
+  take: 18,
 };
 
 export function LandingPage() {
