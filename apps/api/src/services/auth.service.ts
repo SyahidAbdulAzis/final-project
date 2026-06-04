@@ -5,6 +5,10 @@ import type { Account, AuthToken, Role, TokenPurpose } from '../types/auth.type.
 
 const ONE_HOUR_MS = 60 * 60 * 1000;
 
+function toPrismaRole(role: Role) {
+  return role === 'user' ? 'USER' : 'TENANT';
+}
+
 async function findAccount(email: string) {
   return await prisma.user.findUnique({
     where: { email: email.toLowerCase() }
@@ -32,8 +36,11 @@ export async function registerAccount(email: string, role: Role) {
   const account = await prisma.user.create({
     data: {
       email: email.toLowerCase(),
-      role,
-      isVerified: false
+      role: toPrismaRole(role),
+      isVerified: false,
+      passwordHash: '',
+      fullName: '',
+      photoUrl: ''
     }
   });
   
@@ -48,7 +55,7 @@ export async function verifyAccount(token: string, password: string) {
 
 export async function loginAccount(email: string, role: Role, password: string) {
   const account = await findAccount(email);
-  if (!account || account.role !== role) throw new Error('Akun tidak ditemukan');
+  if (!account || account.role !== toPrismaRole(role)) throw new Error('Akun tidak ditemukan');
   if (!account.isVerified) throw new Error('Akun belum terverifikasi');
   
   // For now, we'll skip password validation since the schema doesn't have passwordHash
