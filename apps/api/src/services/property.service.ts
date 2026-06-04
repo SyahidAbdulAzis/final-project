@@ -24,7 +24,8 @@ export async function listProperties(query: PropertyQuery) {
   const properties = await prisma.property.findMany({
     include: {
       category: true,
-      rooms: true
+      rooms: true,
+      images: true
     }
   });
 
@@ -36,7 +37,7 @@ export async function listProperties(query: PropertyQuery) {
     category: prop.category.name,
     description: prop.description,
     price: prop.rooms[0]?.basePrice || 0,
-    imageUrl: prop.imageUrl,
+    imageUrl: prop.images[0]?.url || '',
     available: true
   }));
 
