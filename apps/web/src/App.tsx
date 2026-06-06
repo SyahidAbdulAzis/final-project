@@ -1,7 +1,6 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { LandingPage } from './features/landing/pages/LandingPage';
 import { AuthProvider } from './features/auth/stores/AuthContext.js';
-import { ProtectedRoute } from './features/auth/components/ProtectedRoute.js';
 import {
   LoginPage,
   RegisterPage,
@@ -32,14 +31,7 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/forgot-password/:role" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
-          <Route
-            path="/profile"
-            element={
-              <ProtectedRoute>
-                <ProfilePage />
-              </ProtectedRoute>
-            }
-          />
+          <Route path="/profile" element={<ProfilePage />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
@@ -47,4 +39,3 @@ function App() {
 }
 
 export default App;
-
