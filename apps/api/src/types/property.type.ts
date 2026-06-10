@@ -9,6 +9,9 @@ export type PropertyQuery = {
   category: string;
   sortBy: SortBy;
   order: Order;
+  checkIn?: string;
+  checkOut?: string;
+  guests: number;
 };
 
 export type PropertyItem = {
@@ -20,4 +23,5 @@ export type PropertyItem = {
   price: number;
   imageUrl: string;
   available: boolean;
+  rating?: number;
 };
