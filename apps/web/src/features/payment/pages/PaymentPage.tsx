@@ -19,6 +19,8 @@ export function PaymentPage() {
   const [submitting, setSubmitting] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pageLoadTime] = useState(Date.now());
+  const [timeRemaining, setTimeRemaining] = useState(60 * 60 * 1000); // 1 hour in milliseconds
 
   useEffect(() => {
     if (!bookingId) return;
@@ -34,10 +36,55 @@ export function PaymentPage() {
       });
   }, [bookingId]);
 
+  // Timer for 1 hour limit
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const elapsed = Date.now() - pageLoadTime;
+      const remaining = 60 * 60 * 1000 - elapsed;
+      setTimeRemaining(remaining);
+      
+      if (remaining <= 0) {
+        clearInterval(interval);
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [pageLoadTime]);
+
+  const formatTime = (ms: number) => {
+    const seconds = Math.floor(ms / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    
+    if (hours > 0) {
+      return `${hours} jam ${minutes % 60} menit`;
+    }
+    return `${minutes} menit ${seconds % 60} detik`;
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Validate file size (max 1MB)
+      const maxSize = 1 * 1024 * 1024; // 1MB in bytes
+      if (file.size > maxSize) {
+        setError('Ukuran file maksimal 1MB');
+        setProofFile(null);
+        setPreviewUrl('');
+        return;
+      }
+
+      // Validate file type (JPG or PNG only)
+      const validTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+      if (!validTypes.includes(file.type)) {
+        setError('File harus berformat JPG atau PNG');
+        setProofFile(null);
+        setPreviewUrl('');
+        return;
+      }
+
       setProofFile(file);
+      setError(null);
       // Create preview URL
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -49,6 +96,13 @@ export function PaymentPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Check if time is up
+    if (timeRemaining <= 0) {
+      setError('Waktu untuk mengisi bukti pembayaran telah habis (1 jam). Silakan hubungi admin.');
+      return;
+    }
+    
     if (!proofFile) {
       setError('Silakan pilih file bukti transfer');
       return;
@@ -109,6 +163,25 @@ export function PaymentPage() {
           <p style={{ color: 'var(--muted)', fontSize: '0.9rem' }}>
             Upload bukti transfer untuk booking Anda
           </p>
+          <div style={{
+            marginTop: 12,
+            padding: 12,
+            borderRadius: 8,
+            backgroundColor: timeRemaining <= 0 ? '#fee' : '#e3f2fd',
+            border: `1px solid ${timeRemaining <= 0 ? '#c33' : '#2196f3'}`,
+          }}>
+            <p style={{
+              fontSize: '0.9rem',
+              fontWeight: 600,
+              color: timeRemaining <= 0 ? '#c33' : '#1976d2',
+              margin: 0,
+            }}>
+              {timeRemaining <= 0
+                ? 'Waktu habis! Silakan hubungi admin.'
+                : `Sisa waktu: ${formatTime(timeRemaining)}`
+              }
+            </p>
+          </div>
         </div>
 
         {booking && (
@@ -159,19 +232,22 @@ export function PaymentPage() {
                     </label>
                     <input
                       type="file"
-                      accept="image/*"
+                      accept="image/jpeg,image/jpg,image/png"
                       onChange={handleFileChange}
                       required
+                      disabled={timeRemaining <= 0}
                       style={{
                         width: '100%',
                         padding: 12,
                         borderRadius: 8,
                         border: '1px solid var(--line)',
                         fontSize: '0.95rem',
+                        backgroundColor: timeRemaining <= 0 ? '#f5f5f5' : '#fff',
+                        cursor: timeRemaining <= 0 ? 'not-allowed' : 'pointer',
                       }}
                     />
                     <p style={{ fontSize: '0.8rem', color: 'var(--muted)', marginTop: 4 }}>
-                      Pilih gambar bukti transfer (screenshot dari aplikasi banking)
+                      Format: JPG atau PNG, Maksimal: 1MB
                     </p>
                   </div>
 
@@ -201,21 +277,28 @@ export function PaymentPage() {
 
                   <button
                     type="submit"
-                    disabled={submitting || uploading}
+                    disabled={submitting || uploading || timeRemaining <= 0}
                     style={{
                       width: '100%',
                       padding: 14,
                       borderRadius: 12,
                       border: 'none',
-                      background: submitting || uploading ? 'var(--muted)' : 'var(--primary)',
+                      background: submitting || uploading || timeRemaining <= 0 ? 'var(--muted)' : 'var(--primary)',
                       color: '#fff',
                       fontSize: '1rem',
                       fontWeight: 600,
-                      cursor: submitting || uploading ? 'not-allowed' : 'pointer',
+                      cursor: submitting || uploading || timeRemaining <= 0 ? 'not-allowed' : 'pointer',
                       transition: 'all 0.2s',
                     }}
                   >
-                    {uploading ? 'Mengupload...' : submitting ? 'Mengirim...' : 'Kirim Bukti Pembayaran'}
+                    {timeRemaining <= 0
+                      ? 'Waktu Habis'
+                      : uploading
+                      ? 'Mengupload...'
+                      : submitting
+                      ? 'Mengirim...'
+                      : 'Kirim Bukti Pembayaran'
+                    }
                   </button>
                 </form>
               </div>
