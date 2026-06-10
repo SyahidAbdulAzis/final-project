@@ -5,6 +5,7 @@ import { dummyCards } from '../data/dummyProperties';
 type Props = {
   loading: boolean;
   items: PropertyItem[];
+  onPropertyClick?: (item: PropertyItem) => void;
 };
 
 
@@ -44,14 +45,18 @@ function Availability({ item }: { item: PropertyItem }) {
   return <p className={item.available ? 'chip chip-open' : 'chip chip-closed'}>{item.available ? 'Bisa dipesan' : 'Penuh'}</p>;
 }
 
-function Card({ item }: { item: PropertyItem }) {
+function Card({ item, onClick }: { item: PropertyItem; onClick?: () => void }) {
   const isGuestChoice = item.rating && item.rating >= 4.8;
   return (
-    <article className="card">
+    <article className="card" style={{ cursor: onClick ? 'pointer' : 'default' }} onClick={onClick}>
       <div className="card-media">
         <img src={item.imageUrl} alt={item.name} />
         {isGuestChoice && <span className="card-badge">Pilihan Tamu</span>}
-        <button className="card-favorite" aria-label="Tambahkan ke Favorit">
+        <button 
+          className="card-favorite" 
+          aria-label="Tambahkan ke Favorit"
+          onClick={(e) => e.stopPropagation()}
+        >
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
           </svg>
@@ -75,12 +80,19 @@ function Card({ item }: { item: PropertyItem }) {
   );
 }
 
-function Content({ loading, items }: Pick<Props, 'loading' | 'items'>) {
+function Content({ loading, items, onPropertyClick }: Pick<Props, 'loading' | 'items' | 'onPropertyClick'>) {
   if (loading) return null;
   const displayItems = items.length ? items : dummyCards;
+  const isDummy = !items.length;
   return (
     <div className="property-grid">
-      {displayItems.map((item) => <Card key={item.id} item={item} />)}
+      {displayItems.map((item) => (
+        <Card 
+          key={item.id} 
+          item={item} 
+          onClick={isDummy ? undefined : () => onPropertyClick?.(item)} 
+        />
+      ))}
     </div>
   );
 }
@@ -88,7 +100,7 @@ function Content({ loading, items }: Pick<Props, 'loading' | 'items'>) {
 export function PropertyList(props: Props) {
   return (
     <section id="properti" className="listing-section">
-      <Content loading={props.loading} items={props.items} />
+      <Content loading={props.loading} items={props.items} onPropertyClick={props.onPropertyClick} />
     </section>
   );
 }

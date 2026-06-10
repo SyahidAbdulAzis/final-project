@@ -1,5 +1,5 @@
 import prisma from '../lib/prisma.js';
-import type { CreateBookingInput, UpdateBookingInput } from '../validations/booking.validation.js';
+import type { CreateBookingInput, UpdateBookingInput, ManualPaymentInput } from '../validations/booking.validation.js';
 
 export async function createBooking(data: CreateBookingInput) {
   const { userId, roomId, checkIn, checkOut, totalPrice, proofUrl } = data;
@@ -123,4 +123,55 @@ export async function getAllBookings() {
       createdAt: 'desc',
     },
   });
+}
+
+export async function submitManualPayment(bookingId: string, data: ManualPaymentInput) {
+  const { proofUrl } = data;
+
+  // Check if booking exists
+  const booking = await prisma.booking.findUnique({
+    where: { id: bookingId },
+  });
+
+  if (!booking) {
+    throw new Error('Booking tidak ditemukan');
+  }
+
+  // Create or update payment record
+  await prisma.payment.upsert({
+    where: { bookingId },
+    create: {
+      bookingId,
+      proofUrl,
+    },
+    update: {
+      proofUrl,
+    },
+  });
+
+  // Update booking status to MENUNGGU_KONFIRMASI
+  const updatedBooking = await prisma.booking.update({
+    where: { id: bookingId },
+    data: {
+      status: 'MENUNGGU_KONFIRMASI',
+    },
+    include: {
+      user: {
+        select: {
+          id: true,
+          email: true,
+          fullName: true,
+          photoUrl: true,
+        },
+      },
+      room: {
+        include: {
+          property: true,
+        },
+      },
+      payment: true,
+    },
+  });
+
+  return updatedBooking;
 }

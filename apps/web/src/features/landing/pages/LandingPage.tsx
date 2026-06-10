@@ -5,7 +5,8 @@ import { HeroSection } from '../components/HeroSection';
 import { Footer } from '../../../components/common/Footer';
 import { useProperties } from '../../property/hooks/useProperties';
 import { PropertyList } from '../../property/components/PropertyList';
-import type { PropertyQuery } from '../../../types/property';
+import { useAuth } from '../../auth/stores/AuthContext';
+import type { PropertyQuery, PropertyItem } from '../../../types/property';
 
 const initialQuery: PropertyQuery = {
   city: 'Semua',
@@ -20,6 +21,7 @@ export function LandingPage() {
   const navigate = useNavigate();
   const [query, setState] = useState(initialQuery);
   const { data, loading } = useProperties(query);
+  const { user } = useAuth();
 
   const setQuery = (next: Partial<PropertyQuery>) => {
     if (next.city || next.checkIn || next.checkOut) {
@@ -35,12 +37,22 @@ export function LandingPage() {
     setState((prev) => ({ ...prev, ...next }));
   };
 
+  const handlePropertyClick = (item: PropertyItem) => {
+    if (!user) {
+      alert('Silakan login terlebih dahulu untuk melakukan booking');
+      navigate('/login/user');
+      return;
+    }
+    // Navigate to property detail page where user can select a room and book
+    navigate(`/properties/${item.id}`);
+  };
+
   return (
     <div className="layout">
       <Navbar query={query} setQuery={setQuery} />
       <main className="page-main">
         <HeroSection />
-        <PropertyList loading={loading} items={data} />
+        <PropertyList loading={loading} items={data} onPropertyClick={handlePropertyClick} />
       </main>
       <Footer />
     </div>
