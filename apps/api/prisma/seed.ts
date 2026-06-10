@@ -5,10 +5,30 @@ import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
+const imagePool = [
+  'https://images.unsplash.com/photo-1582719508461-905c673771fd?w=800',
+  'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800',
+  'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800',
+  'https://images.unsplash.com/photo-1512918728675-ed5a9ecdebfd?w=800',
+  'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800',
+  'https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800',
+  'https://images.unsplash.com/photo-1542314831-0680e6eebb0f?w=800',
+  'https://images.unsplash.com/photo-1449156493391-d2cfa28e468b?w=800',
+  'https://images.unsplash.com/photo-1502005229766-52835283e22d?w=800',
+  'https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=800',
+  'https://images.unsplash.com/photo-1613490497141-28a7077cd465?w=800',
+  'https://images.unsplash.com/photo-1580587771525-78b9dba3b91d?w=800',
+  'https://images.unsplash.com/photo-1598928506311-c55e1f0b1dd2?w=800',
+  'https://images.unsplash.com/photo-1555854877-bab0e564b8d5?w=800',
+  'https://images.unsplash.com/photo-1518780664697-55e3ad937233?w=800',
+  'https://images.unsplash.com/photo-1560185127-6ed189bf02f4?w=800',
+  'https://images.unsplash.com/photo-1468824357306-a439d58ccb1c?w=800',
+  'https://images.unsplash.com/photo-1554995207-c18c203602cb?w=800',
+];
+
 async function main() {
   console.log('🌱 Starting seed...');
 
-  // Clean existing data
   await prisma.payment.deleteMany();
   await prisma.booking.deleteMany();
   await prisma.review.deleteMany();
@@ -24,227 +44,118 @@ async function main() {
 
   console.log('🧹 Cleaned existing data');
 
-  // Create Users
   const passwordHash = await bcrypt.hash('password123', 10);
-  
-  const user1 = await prisma.user.create({
-    data: {
-      email: 'user1@example.com',
-      passwordHash,
-      fullName: 'John Doe',
-      photoUrl: 'https://i.pravatar.cc/150?img=1',
-      role: 'USER',
-      isVerified: true,
-    },
-  });
 
-  const user2 = await prisma.user.create({
-    data: {
-      email: 'user2@example.com',
-      passwordHash,
-      fullName: 'Jane Smith',
-      photoUrl: 'https://i.pravatar.cc/150?img=2',
-      role: 'USER',
-      isVerified: true,
-    },
-  });
-
-  const tenant1 = await prisma.user.create({
-    data: {
-      email: 'tenant1@example.com',
-      passwordHash,
-      fullName: 'Tenant One',
-      photoUrl: 'https://i.pravatar.cc/150?img=3',
-      role: 'TENANT',
-      isVerified: true,
-    },
-  });
-
-  const tenant2 = await prisma.user.create({
-    data: {
-      email: 'tenant2@example.com',
-      passwordHash,
-      fullName: 'Tenant Two',
-      photoUrl: 'https://i.pravatar.cc/150?img=4',
-      role: 'TENANT',
-      isVerified: true,
-    },
-  });
+  const [user1, user2, tenant1, tenant2] = await Promise.all([
+    prisma.user.create({ data: { email: 'user1@example.com', passwordHash, fullName: 'John Doe', photoUrl: 'https://i.pravatar.cc/150?img=1', role: 'USER', isVerified: true } }),
+    prisma.user.create({ data: { email: 'user2@example.com', passwordHash, fullName: 'Jane Smith', photoUrl: 'https://i.pravatar.cc/150?img=2', role: 'USER', isVerified: true } }),
+    prisma.user.create({ data: { email: 'tenant1@example.com', passwordHash, fullName: 'Tenant One', photoUrl: 'https://i.pravatar.cc/150?img=3', role: 'TENANT', isVerified: true } }),
+    prisma.user.create({ data: { email: 'tenant2@example.com', passwordHash, fullName: 'Tenant Two', photoUrl: 'https://i.pravatar.cc/150?img=4', role: 'TENANT', isVerified: true } }),
+  ]);
 
   console.log('👤 Created 4 users');
 
-  // Create Property Categories
-  const category1 = await prisma.propertyCategory.create({
-    data: {
-      name: 'Apartment',
-    },
-  });
+  const categories = await Promise.all([
+    prisma.propertyCategory.create({ data: { name: 'Apartemen' } }),
+    prisma.propertyCategory.create({ data: { name: 'Villa' } }),
+    prisma.propertyCategory.create({ data: { name: 'Hotel' } }),
+    prisma.propertyCategory.create({ data: { name: 'Resort' } }),
+    prisma.propertyCategory.create({ data: { name: 'Guesthouse' } }),
+    prisma.propertyCategory.create({ data: { name: 'Cabin' } }),
+    prisma.propertyCategory.create({ data: { name: 'Studio' } }),
+  ]);
 
-  const category2 = await prisma.propertyCategory.create({
-    data: {
-      name: 'Villa',
-    },
-  });
+  console.log('🏷️ Created 7 property categories');
 
-  const category3 = await prisma.propertyCategory.create({
-    data: {
-      name: 'Hotel',
-    },
-  });
+  const propertiesData = [
+    { name: 'Vila Panorama Ubud', city: 'Bali', catIdx: 1, price: 1250000, guests: 4, img: 0 },
+    { name: 'Suite Menteng', city: 'Jakarta', catIdx: 0, price: 890000, guests: 2, img: 1 },
+    { name: 'Cabin Lembang', city: 'Bandung', catIdx: 5, price: 760000, guests: 3, img: 2 },
+    { name: 'Studio Malioboro', city: 'Yogyakarta', catIdx: 6, price: 640000, guests: 2, img: 3 },
+    { name: 'Guesthouse Surabaya', city: 'Surabaya', catIdx: 4, price: 550000, guests: 2, img: 4 },
+    { name: 'Resort Bali', city: 'Bali', catIdx: 3, price: 2100000, guests: 4, img: 5 },
+    { name: 'Pentagon Jakarta', city: 'Jakarta', catIdx: 0, price: 1500000, guests: 3, img: 6 },
+    { name: 'Villa Seminyak', city: 'Bali', catIdx: 1, price: 1800000, guests: 4, img: 7 },
+    { name: 'Cabin Ciwidey', city: 'Bandung', catIdx: 5, price: 680000, guests: 2, img: 8 },
+    { name: 'Studio Kotabaru', city: 'Yogyakarta', catIdx: 6, price: 590000, guests: 2, img: 9 },
+    { name: 'Guesthouse Gubeng', city: 'Surabaya', catIdx: 4, price: 520000, guests: 2, img: 10 },
+    { name: 'Resort Nusa Dua', city: 'Bali', catIdx: 3, price: 2800000, guests: 4, img: 11 },
+    { name: 'Apartemen Kemang', city: 'Jakarta', catIdx: 0, price: 950000, guests: 2, img: 12 },
+    { name: 'Villa Canggu', city: 'Bali', catIdx: 1, price: 1650000, guests: 4, img: 13 },
+    { name: 'Cabin Pangalengan', city: 'Bandung', catIdx: 5, price: 720000, guests: 3, img: 14 },
+    { name: 'Studio UGM', city: 'Yogyakarta', catIdx: 6, price: 580000, guests: 2, img: 15 },
+    { name: 'Guesthouse Tunjungan', city: 'Surabaya', catIdx: 4, price: 670000, guests: 2, img: 16 },
+    { name: 'Resort Sanur', city: 'Bali', catIdx: 3, price: 1950000, guests: 4, img: 17 },
+  ];
 
-  console.log('🏷️ Created 3 property categories');
-
-  // Create Properties
-  const property1 = await prisma.property.create({
-    data: {
-      name: 'Mentari Suites',
-      city: 'Jakarta',
-      address: 'Jl. Sudirman No. 123',
-      province: 'DKI Jakarta',
-      latitude: -6.2088,
-      longitude: 106.8456,
-      description: 'Luxury apartment in the heart of Jakarta',
-      tenantId: tenant1.id,
-      categoryId: category1.id,
-    },
-  });
-
-  const property2 = await prisma.property.create({
-    data: {
-      name: 'Bali Beach Villa',
-      city: 'Bali',
-      address: 'Jl. Pantai Kuta No. 45',
-      province: 'Bali',
-      latitude: -8.3405,
-      longitude: 115.0920,
-      description: 'Beautiful villa near the beach',
-      tenantId: tenant1.id,
-      categoryId: category2.id,
-    },
-  });
-
-  const property3 = await prisma.property.create({
-    data: {
-      name: 'Bandung Highland Hotel',
-      city: 'Bandung',
-      address: 'Jl. Dago Atas No. 78',
-      province: 'Jawa Barat',
-      latitude: -6.9175,
-      longitude: 107.6191,
-      description: 'Cozy hotel with mountain view',
-      tenantId: tenant2.id,
-      categoryId: category3.id,
-    },
-  });
-
-  console.log('🏠 Created 3 properties');
-
-  // Create Property Images
-  await prisma.propertyImage.createMany({
-    data: [
-      {
-        propertyId: property1.id,
-        url: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=1200',
-        order: 0,
+  const createdProperties: any[] = [];
+  for (const p of propertiesData) {
+    const prop = await prisma.property.create({
+      data: {
+        name: p.name,
+        city: p.city,
+        address: `Jl. ${p.name} No. ${Math.floor(Math.random() * 200) + 1}`,
+        province: p.city === 'Jakarta' ? 'DKI Jakarta' : p.city === 'Bali' ? 'Bali' : p.city === 'Bandung' ? 'Jawa Barat' : p.city === 'Yogyakarta' ? 'DI Yogyakarta' : 'Jawa Timur',
+        latitude: -6 + Math.random() * 3,
+        longitude: 106 + Math.random() * 10,
+        description: `${p.name} — tempat menginap terbaik di ${p.city}`,
+        tenantId: Math.random() > 0.5 ? tenant1.id : tenant2.id,
+        categoryId: categories[p.catIdx].id,
       },
-      {
-        propertyId: property1.id,
-        url: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=1200',
-        order: 1,
-      },
-      {
-        propertyId: property2.id,
-        url: 'https://images.unsplash.com/photo-1512918728675-ed5a9ecdebfd?w=1200',
-        order: 0,
-      },
-      {
-        propertyId: property3.id,
-        url: 'https://images.unsplash.com/photo-1468824357306-a439d58ccb1c?w=1200',
-        order: 0,
-      },
-    ],
-  });
-
-  console.log('📸 Created property images');
-
-  // Create Rooms
-  const room1 = await prisma.room.create({
-    data: {
-      propertyId: property1.id,
-      name: 'Deluxe Suite',
-      description: 'Spacious room with city view',
-      basePrice: 550000,
-      maxGuests: 2,
-    },
-  });
-
-  const room2 = await prisma.room.create({
-    data: {
-      propertyId: property1.id,
-      name: 'Premium Suite',
-      description: 'Luxury room with balcony',
-      basePrice: 750000,
-      maxGuests: 3,
-    },
-  });
-
-  const room3 = await prisma.room.create({
-    data: {
-      propertyId: property2.id,
-      name: 'Beach View Room',
-      description: 'Room with ocean view',
-      basePrice: 920000,
-      maxGuests: 4,
-    },
-  });
-
-  const room4 = await prisma.room.create({
-    data: {
-      propertyId: property3.id,
-      name: 'Mountain View Room',
-      description: 'Room with mountain view',
-      basePrice: 430000,
-      maxGuests: 2,
-    },
-  });
-
-  console.log('🛏️ Created 4 rooms');
-
-  // Create Room Availability for next 30 days
-  const today = new Date();
-  const availabilityData: { roomId: string; date: Date; isAvailable: boolean }[] = [];
-  
-  for (let i = 0; i < 30; i++) {
-    const date = new Date(today);
-    date.setDate(date.getDate() + i);
-    
-    [room1, room2, room3, room4].forEach(room => {
-      availabilityData.push({
-        roomId: room.id,
-        date,
-        isAvailable: true,
-      });
     });
+    createdProperties.push(prop);
   }
 
-  await prisma.roomAvailability.createMany({
-    data: availabilityData,
+  console.log('🏠 Created 18 properties');
+
+  // Create images
+  const imageData: { propertyId: string; url: string; order: number }[] = [];
+  createdProperties.forEach((prop, i) => {
+    imageData.push({ propertyId: prop.id, url: imagePool[i % imagePool.length], order: 0 });
   });
+  await prisma.propertyImage.createMany({ data: imageData });
+  console.log('📸 Created property images');
 
-  console.log('📅 Created room availability for 30 days');
+  // Create 1 room per property
+  const createdRooms: any[] = [];
+  for (let i = 0; i < propertiesData.length; i++) {
+    const p = propertiesData[i];
+    const room = await prisma.room.create({
+      data: {
+        propertyId: createdProperties[i].id,
+        name: `${p.name} Room`,
+        description: `Kamar untuk ${p.guests} tamu`,
+        basePrice: p.price,
+        maxGuests: p.guests,
+      },
+    });
+    createdRooms.push(room);
+  }
 
-  // Create Seasonal Rates
-  await prisma.seasonalRate.create({
-    data: {
-      roomId: room3.id,
-      name: 'Peak Season',
-      startDate: new Date('2024-12-20'),
-      endDate: new Date('2025-01-05'),
-      adjustmentType: 'PERCENTAGE',
-      adjustmentValue: 20,
-    },
+  console.log('🛏️ Created 18 rooms');
+
+  // Availability
+  const today = new Date();
+  const availabilityData: { roomId: string; date: Date; isAvailable: boolean }[] = [];
+  for (let i = 0; i < 60; i++) {
+    const date = new Date(today);
+    date.setDate(date.getDate() + i);
+    createdRooms.forEach((room) => {
+      availabilityData.push({ roomId: room.id, date, isAvailable: Math.random() > 0.15 });
+    });
+  }
+  await prisma.roomAvailability.createMany({ data: availabilityData });
+  console.log('📅 Created room availability for 60 days');
+
+  // Seasonal rates
+  await prisma.seasonalRate.createMany({
+    data: [
+      { roomId: createdRooms[0].id, name: 'Lebaran 2026', startDate: new Date('2026-04-01'), endDate: new Date('2026-04-10'), adjustmentType: 'PERCENTAGE', adjustmentValue: 30 },
+      { roomId: createdRooms[5].id, name: 'Summer Peak', startDate: new Date('2026-06-01'), endDate: new Date('2026-08-31'), adjustmentType: 'PERCENTAGE', adjustmentValue: 25 },
+      { roomId: createdRooms[11].id, name: 'Nyepi Special', startDate: new Date('2026-03-10'), endDate: new Date('2026-03-15'), adjustmentType: 'NOMINAL', adjustmentValue: 200000 },
+      { roomId: createdRooms[2].id, name: 'Weekend Premium', startDate: new Date('2026-01-01'), endDate: new Date('2026-12-31'), adjustmentType: 'PERCENTAGE', adjustmentValue: 15 },
+    ],
   });
-
   console.log('💰 Created seasonal rates');
 
   console.log('✅ Seed completed successfully!');

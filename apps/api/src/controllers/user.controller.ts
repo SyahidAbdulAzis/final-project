@@ -1,9 +1,9 @@
 import { Request, Response } from 'express';
+import { z } from 'zod';
 import { getAllUsers, getUserById } from '../services/user.service.js';
+import { badRequest, parseOrBad, notFound } from '../utils/controller.utils.js';
 
-function badRequest(res: Response, message: string) {
-  return res.status(400).json({ message });
-}
+const userIdSchema = z.object({ id: z.string().min(1) });
 
 export async function getAllUsersHandler(req: Request, res: Response) {
   try {
@@ -15,11 +15,11 @@ export async function getAllUsersHandler(req: Request, res: Response) {
 }
 
 export async function getUserByIdHandler(req: Request, res: Response) {
-  const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-  if (!id) return badRequest(res, 'Id wajib diisi');
+  const parsed = parseOrBad(res, userIdSchema, req.params);
+  if (!parsed) return;
   try {
-    const user = await getUserById(id);
-    if (!user) return badRequest(res, 'User tidak ditemukan');
+    const user = await getUserById(parsed.id);
+    if (!user) return notFound(res, 'User tidak ditemukan');
     return res.json(user);
   } catch (error) {
     return badRequest(res, (error as Error).message);

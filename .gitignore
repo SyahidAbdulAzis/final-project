@@ -6,7 +6,7 @@ build/
 dist/
 coverage/
 
-# env
+# env 
 .env
 .env.local
 .env.*.local
@@ -23,7 +23,3 @@ Thumbs.db
 .vscode/
 .idea/
 
-# Internal workflow docs (add back before GitHub update)
-# .windsurf/
-# docs/
-# AGENTS.md

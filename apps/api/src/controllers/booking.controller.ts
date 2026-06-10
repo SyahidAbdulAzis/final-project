@@ -1,5 +1,4 @@
 import { Request, Response } from 'express';
-import { z } from 'zod';
 import {
   createBookingSchema,
   updateBookingSchema,
@@ -14,17 +13,7 @@ import {
   deleteBooking,
   getAllBookings,
 } from '../services/booking.service.js';
-
-function badRequest(res: Response, message: string, errors?: any) {
-  return res.status(400).json({ message, errors });
-}
-
-function parseOrBad<T>(res: Response, schema: z.ZodType<T>, data: any): T | null {
-  const parsed = schema.safeParse(data);
-  if (parsed.success) return parsed.data;
-  badRequest(res, 'Input tidak valid', parsed.error);
-  return null;
-}
+import { badRequest, parseOrBad, pickParam } from '../utils/controller.utils.js';
 
 export async function createBookingHandler(req: Request, res: Response) {
   const bodyParsed = parseOrBad(res, createBookingSchema, req.body);
@@ -50,7 +39,7 @@ export async function getBookingHandler(req: Request, res: Response) {
 }
 
 export async function getUserBookingsHandler(req: Request, res: Response) {
-  const userId = Array.isArray(req.params.userId) ? req.params.userId[0] : req.params.userId;
+  const userId = pickParam(req.params.userId);
   if (!userId) return badRequest(res, 'UserId wajib diisi');
   try {
     const bookings = await getBookingsByUserId(userId);
@@ -61,7 +50,7 @@ export async function getUserBookingsHandler(req: Request, res: Response) {
 }
 
 export async function getRoomBookingsHandler(req: Request, res: Response) {
-  const roomId = Array.isArray(req.params.roomId) ? req.params.roomId[0] : req.params.roomId;
+  const roomId = pickParam(req.params.roomId);
   if (!roomId) return badRequest(res, 'RoomId wajib diisi');
   try {
     const bookings = await getBookingsByRoomId(roomId);

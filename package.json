@@ -1,0 +1,16 @@
+{
+  "private": true,
+  "scripts": {
+    "dev:api": "cd apps/api && npm run dev",
+    "dev:web": "cd apps/web && npm run dev",
+    "dev": "concurrently \"npm run dev:api\" \"npm run dev:web\"",
+    "build:api": "npm run build --prefix apps/api",
+    "build:web": "npm run build --prefix apps/web",
+    "prisma:generate": "cd apps/api && npm run prisma:generate",
+    "install:all": "cd apps/api && npm install && cd ../web && npm install"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.0",
+    "concurrently": "^9.1.2"
+  }
+}

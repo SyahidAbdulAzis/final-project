@@ -20,30 +20,17 @@ import {
   updateProfile,
   verifyAccount,
 } from '../services/auth.service.js';
-import type { ZodTypeAny } from 'zod';
-
-function badRequest(res: Response, message: string, errors?: unknown) {
-  return res.status(400).json({ message, errors });
-}
-
-function parseOrBad<T>(res: Response, schema: ZodTypeAny, data: unknown) {
-  const parsed = schema.safeParse(data);
-  if (parsed.success) return parsed.data;
-  badRequest(res, 'Input tidak valid', parsed.error);
-  return null;
-}
-
-function pickParam(value: string | string[] | undefined) {
-  if (Array.isArray(value)) return value[0] || '';
-  return value || '';
-}
+import { sendEmail, verificationEmailTemplate, resetPasswordEmailTemplate } from '../utils/email.js';
+import { badRequest, parseOrBad, pickParam } from '../utils/controller.utils.js';
 
 export async function registerHandler(req: Request, res: Response) {
   const roleParsed = parseOrBad(res, roleParamSchema, req.params);
   const bodyParsed = parseOrBad(res, registerSchema, req.body);
   if (!roleParsed || !bodyParsed) return;
   try {
-    return res.status(201).json(await registerAccount(bodyParsed.email, roleParsed.role));
+    const result = await registerAccount(bodyParsed.email, roleParsed.role);
+    await sendEmail(bodyParsed.email, 'Verifikasi Akun StayEase', verificationEmailTemplate('', result.token));
+    return res.status(201).json({ message: 'Registrasi berhasil. Silakan cek email untuk verifikasi.', token: result.token });
   } catch (error) {
     return badRequest(res, (error as Error).message);
   }
@@ -64,7 +51,8 @@ export async function loginHandler(req: Request, res: Response) {
   const bodyParsed = parseOrBad(res, loginSchema, req.body);
   if (!roleParsed || !bodyParsed) return;
   try {
-    return res.json(await loginAccount(bodyParsed.email, roleParsed.role, bodyParsed.password));
+    const result = await loginAccount(bodyParsed.email, roleParsed.role, bodyParsed.password);
+    return res.json(result);
   } catch (error) {
     return badRequest(res, (error as Error).message);
   }
@@ -74,7 +62,9 @@ export async function resendHandler(req: Request, res: Response) {
   const bodyParsed = parseOrBad(res, emailOnlySchema, req.body);
   if (!bodyParsed) return;
   try {
-    return res.json(await resendVerification(bodyParsed.email));
+    const result = await resendVerification(bodyParsed.email);
+    await sendEmail(bodyParsed.email, 'Verifikasi Akun StayEase', verificationEmailTemplate('', result.token));
+    return res.json({ message: 'Email verifikasi telah dikirim ulang.', token: result.token });
   } catch (error) {
     return badRequest(res, (error as Error).message);
   }
@@ -84,7 +74,9 @@ export async function forgotPasswordHandler(req: Request, res: Response) {
   const bodyParsed = parseOrBad(res, emailOnlySchema, req.body);
   if (!bodyParsed) return;
   try {
-    return res.json(await requestResetPassword(bodyParsed.email));
+    const result = await requestResetPassword(bodyParsed.email);
+    await sendEmail(bodyParsed.email, 'Reset Password StayEase', resetPasswordEmailTemplate('', result.token));
+    return res.json({ message: 'Email reset password telah dikirim.', token: result.token });
   } catch (error) {
     return badRequest(res, (error as Error).message);
   }
@@ -116,7 +108,11 @@ export async function profilePatchHandler(req: Request, res: Response) {
   if (!email) return badRequest(res, 'Email wajib diisi');
   if (!bodyParsed) return;
   try {
-    return res.json(await updateProfile(email, bodyParsed.fullName, bodyParsed.photoUrl));
+    const result = await updateProfile(email, bodyParsed.fullName, bodyParsed.photoUrl, bodyParsed.email, bodyParsed.phone);
+    if (result.verificationToken) {
+      await sendEmail(result.email, 'Verifikasi Akun StayEase', verificationEmailTemplate('', result.verificationToken));
+    }
+    return res.json(result);
   } catch (error) {
     return badRequest(res, (error as Error).message);
   }
