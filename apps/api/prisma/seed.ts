@@ -5,10 +5,30 @@ import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
+const imagePool = [
+  'https://images.unsplash.com/photo-1582719508461-905c673771fd?w=800',
+  'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800',
+  'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800',
+  'https://images.unsplash.com/photo-1512918728675-ed5a9ecdebfd?w=800',
+  'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800',
+  'https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800',
+  'https://images.unsplash.com/photo-1542314831-0680e6eebb0f?w=800',
+  'https://images.unsplash.com/photo-1449156493391-d2cfa28e468b?w=800',
+  'https://images.unsplash.com/photo-1502005229766-52835283e22d?w=800',
+  'https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=800',
+  'https://images.unsplash.com/photo-1613490497141-28a7077cd465?w=800',
+  'https://images.unsplash.com/photo-1580587771525-78b9dba3b91d?w=800',
+  'https://images.unsplash.com/photo-1598928506311-c55e1f0b1dd2?w=800',
+  'https://images.unsplash.com/photo-1555854877-bab0e564b8d5?w=800',
+  'https://images.unsplash.com/photo-1518780664697-55e3ad937233?w=800',
+  'https://images.unsplash.com/photo-1560185127-6ed189bf02f4?w=800',
+  'https://images.unsplash.com/photo-1468824357306-a439d58ccb1c?w=800',
+  'https://images.unsplash.com/photo-1554995207-c18c203602cb?w=800',
+];
+
 async function main() {
   console.log('🌱 Starting seed...');
 
-  // Clean existing data
   await prisma.payment.deleteMany();
   await prisma.booking.deleteMany();
   await prisma.review.deleteMany();
@@ -24,52 +44,14 @@ async function main() {
 
   console.log('🧹 Cleaned existing data');
 
-  // Create Users
   const passwordHash = await bcrypt.hash('password123', 10);
-  
-  const user1 = await prisma.user.create({
-    data: {
-      email: 'user1@example.com',
-      passwordHash,
-      fullName: 'John Doe',
-      photoUrl: 'https://i.pravatar.cc/150?img=1',
-      role: 'USER',
-      isVerified: true,
-    },
-  });
 
-  const user2 = await prisma.user.create({
-    data: {
-      email: 'user2@example.com',
-      passwordHash,
-      fullName: 'Jane Smith',
-      photoUrl: 'https://i.pravatar.cc/150?img=2',
-      role: 'USER',
-      isVerified: true,
-    },
-  });
-
-  const tenant1 = await prisma.user.create({
-    data: {
-      email: 'tenant1@example.com',
-      passwordHash,
-      fullName: 'Tenant One',
-      photoUrl: 'https://i.pravatar.cc/150?img=3',
-      role: 'TENANT',
-      isVerified: true,
-    },
-  });
-
-  const tenant2 = await prisma.user.create({
-    data: {
-      email: 'tenant2@example.com',
-      passwordHash,
-      fullName: 'Tenant Two',
-      photoUrl: 'https://i.pravatar.cc/150?img=4',
-      role: 'TENANT',
-      isVerified: true,
-    },
-  });
+  const [user1, user2, tenant1, tenant2] = await Promise.all([
+    prisma.user.create({ data: { email: 'user1@example.com', passwordHash, fullName: 'John Doe', photoUrl: 'https://i.pravatar.cc/150?img=1', role: 'USER', isVerified: true } }),
+    prisma.user.create({ data: { email: 'user2@example.com', passwordHash, fullName: 'Jane Smith', photoUrl: 'https://i.pravatar.cc/150?img=2', role: 'USER', isVerified: true } }),
+    prisma.user.create({ data: { email: 'tenant1@example.com', passwordHash, fullName: 'Tenant One', photoUrl: 'https://i.pravatar.cc/150?img=3', role: 'TENANT', isVerified: true } }),
+    prisma.user.create({ data: { email: 'tenant2@example.com', passwordHash, fullName: 'Tenant Two', photoUrl: 'https://i.pravatar.cc/150?img=4', role: 'TENANT', isVerified: true } }),
+  ]);
 
   console.log('👤 Created 4 users');
 
@@ -185,7 +167,7 @@ async function main() {
   }
   console.log(`🛏️ Created ${createdRooms.length} rooms`);
 
-  // Create Room Availability for next 30 days
+  // Availability
   const today = new Date();
   const availabilityData: { roomId: string; date: Date; isAvailable: boolean }[] = [];
   for (let i = 0; i < 30; i++) {
