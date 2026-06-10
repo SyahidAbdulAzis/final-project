@@ -1,9 +1,9 @@
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 
 export interface User {
+  id: string;
   name: string;
   email: string;
-  phone?: string;
   role: 'user' | 'tenant';
   avatar?: string;
   isVerified: boolean;
@@ -13,55 +13,66 @@ interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (role?: 'user' | 'tenant') => void;
+  login: (token: string, user: User) => void;
   logout: () => void;
   updateUser: (data: Partial<User>) => void;
 }
 
-const dummyUser: User = {
-  name: 'Budi Santoso',
-  email: 'budi@example.com',
-  phone: '+62 812-3456-7890',
-  role: 'user',
-  isVerified: true,
-};
-
-const dummyTenant: User = {
-  name: 'Ani Wijaya',
-  email: 'ani@example.com',
-  phone: '+62 878-9012-3456',
-  role: 'tenant',
-  isVerified: false,
-};
-
 const AuthContext = createContext<AuthContextType>({
   user: null,
   isAuthenticated: false,
-  isLoading: false,
+  isLoading: true,
   login: () => {},
   logout: () => {},
   updateUser: () => {},
 });
 
+function getStoredAuth(): { token: string | null; user: User | null } {
+  try {
+    const token = localStorage.getItem('token');
+    const userRaw = localStorage.getItem('user');
+    const user = userRaw ? (JSON.parse(userRaw) as User) : null;
+    return { token, user };
+  } catch {
+    return { token: null, user: null };
+  }
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const isAuthenticated = !!user;
 
-  const login = (role: 'user' | 'tenant' = 'user') => {
-    setUser(role === 'tenant' ? dummyTenant : dummyUser);
+  useEffect(() => {
+    const { user: storedUser } = getStoredAuth();
+    if (storedUser) setUser(storedUser);
+    setIsLoading(false);
+  }, []);
+
+  const login = (token: string, userData: User) => {
+    localStorage.setItem('token', token);
+    localStorage.setItem('user', JSON.stringify(userData));
+    setUser(userData);
   };
 
   const logout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
     setUser(null);
     window.location.href = '/';
   };
 
   const updateUser = (data: Partial<User>) => {
-    setUser((prev) => (prev ? { ...prev, ...data } : null));
+    setUser((prev) => {
+      if (!prev) return null;
+      const updated = { ...prev, ...data };
+      localStorage.setItem('user', JSON.stringify(updated));
+      return updated;
+    });
   };
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated, isLoading: false, login, logout, updateUser }}>
+    <AuthContext.Provider value={{ user, isAuthenticated, isLoading, login, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

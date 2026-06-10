@@ -38,7 +38,6 @@ const MAX_FILE_SIZE = 1 * 1024 * 1024; // 1MB
 export const profileSchema = z.object({
   fullName: z.string().optional(),
   email: z.string().email('Format email tidak valid').optional(),
-  phone: z.string().optional(),
   photo: z
     .instanceof(FileList)
     .optional()
