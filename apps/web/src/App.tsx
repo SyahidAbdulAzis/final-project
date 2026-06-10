@@ -44,9 +44,11 @@ function App() {
           <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/profile" element={<ProfilePage />} />
 
+          {/* Property Management */}
           <Route path="/properties" element={<PropertyCatalogPage />} />
           <Route path="/properties/:id" element={<PropertyDetailPage />} />
 
+          {/* Tenant Dashboard — TEMP: unprotected for preview */}
           <Route path="/tenant/dashboard" element={<TenantDashboardPage />} />
           <Route path="/tenant/properties" element={<TenantPropertiesPage />} />
           <Route path="/tenant/categories" element={<TenantCategoriesPage />} />
