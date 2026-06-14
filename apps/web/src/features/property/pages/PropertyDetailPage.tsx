@@ -32,7 +32,8 @@ export function PropertyDetailPage() {
   const [property, setProperty] = useState<PropertyDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedRoom, setSelectedRoom] = useState<string>('');
-  const [checkDate, setCheckDate] = useState('');
+  const [checkIn, setCheckIn] = useState('');
+  const [checkOut, setCheckOut] = useState('');
 
   useEffect(() => {
     if (!id) return;
@@ -61,95 +62,164 @@ export function PropertyDetailPage() {
   };
 
   const selectedRoomObj = property?.rooms.find((r) => r.id === selectedRoom);
-  const currentPrice = selectedRoomObj && checkDate ? getRoomPrice(selectedRoomObj, checkDate) : selectedRoomObj?.basePrice || 0;
+  const nights = checkIn && checkOut
+    ? Math.max(1, Math.ceil((new Date(checkOut).getTime() - new Date(checkIn).getTime()) / (1000 * 60 * 60 * 24)))
+    : 1;
+  const currentPrice = selectedRoomObj && checkIn ? getRoomPrice(selectedRoomObj, checkIn) : selectedRoomObj?.basePrice || 0;
+  const totalPrice = currentPrice * nights;
 
-  if (loading) return <div className="layout"><Navbar /><main style={{ padding: 40, maxWidth: 1360, margin: '0 auto' }}><p>Memuat...</p></main><Footer /></div>;
-  if (!property) return <div className="layout"><Navbar /><main style={{ padding: 40, maxWidth: 1360, margin: '0 auto' }}><p>Properti tidak ditemukan.</p></main><Footer /></div>;
+  if (loading) return (
+    <div className="layout">
+      <Navbar />
+      <main className="property-detail-page"><p>Memuat...</p></main>
+      <Footer />
+    </div>
+  );
+  if (!property) return (
+    <div className="layout">
+      <Navbar />
+      <main className="property-detail-page"><p>Properti tidak ditemukan.</p></main>
+      <Footer />
+    </div>
+  );
+
+  const handleDateSelect = (date: string) => {
+    if (!checkIn || (checkIn && checkOut)) {
+      setCheckIn(date);
+      setCheckOut('');
+    } else if (new Date(date) > new Date(checkIn)) {
+      setCheckOut(date);
+    } else {
+      setCheckIn(date);
+    }
+  };
 
   return (
     <div className="layout">
       <Navbar />
-      <main style={{ padding: '28px 32px', maxWidth: 1360, margin: '0 auto' }}>
-        <div style={{ marginBottom: 24 }}>
-          <h1 style={{ fontSize: '1.6rem', fontWeight: 700, marginBottom: 6, color: 'var(--text)' }}>{property.name}</h1>
-          <p style={{ color: 'var(--muted)', fontSize: '0.9rem' }}>{property.city} · {property.category.name}</p>
+      <main className="property-detail-page">
+        <div className="property-detail-header">
+          <h1>{property.name}</h1>
+          <p className="property-detail-header-meta">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            {property.address}, {property.city} · {property.category.name}
+          </p>
         </div>
 
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-          gap: 8,
-          marginBottom: 28,
-        }}>
-          {property.images.map((img, i) => (
-            <div key={i} style={{
-              height: 260,
-              borderRadius: 16,
-              background: `url(${img.url}) center/cover`,
-              backgroundColor: '#eee',
-            }} />
-          ))}
+        <div className="property-gallery">
+          {property.images.length === 1 ? (
+            <div
+              className="property-gallery-img"
+              style={{ background: `url(${property.images[0].url}) center/cover`, gridColumn: '1 / -1' }}
+            />
+          ) : (
+            property.images.slice(0, 5).map((img, i) => (
+              <div
+                key={i}
+                className="property-gallery-img"
+                style={{ background: `url(${img.url}) center/cover` }}
+              />
+            ))
+          )}
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 32 }}>
+        <div className="property-detail-layout">
           <div>
-            <h2 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: 12, color: 'var(--text)' }}>Deskripsi</h2>
-            <p style={{ color: 'var(--muted)', lineHeight: 1.7, marginBottom: 28 }}>{property.description}</p>
-
-            <h2 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: 16, color: 'var(--text)' }}>Pilihan Kamar</h2>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {property.rooms.map((room) => (
-                <button
-                  key={room.id}
-                  onClick={() => setSelectedRoom(room.id)}
-                  style={{
-                    textAlign: 'left',
-                    padding: 18,
-                    borderRadius: 14,
-                    border: selectedRoom === room.id ? '2px solid var(--primary)' : '1px solid var(--line)',
-                    background: '#fff',
-                    cursor: 'pointer',
-                    transition: 'all 0.15s',
-                  }}
-                >
-                  <div style={{ fontWeight: 700, marginBottom: 4, color: 'var(--text)' }}>{room.name}</div>
-                  <div style={{ fontSize: '0.85rem', color: 'var(--muted)', marginBottom: 8 }}>Maks {room.maxGuests} tamu</div>
-                  <div style={{ fontWeight: 700, color: 'var(--primary)' }}>Rp {room.basePrice.toLocaleString('id-ID')} <span style={{ fontWeight: 400, fontSize: '0.8rem', color: 'var(--muted)' }}>/malam</span></div>
-                </button>
-              ))}
+            <div className="property-detail-section">
+              <h2>Tentang properti ini</h2>
+              <p>{property.description}</p>
             </div>
+
+            <div className="property-detail-section">
+              <h2>Pilihan Kamar</h2>
+              <div className="room-list">
+                {property.rooms.map((room) => (
+                  <button
+                    key={room.id}
+                    type="button"
+                    onClick={() => setSelectedRoom(room.id)}
+                    className={`room-card${selectedRoom === room.id ? ' selected' : ''}`}
+                  >
+                    <div className="room-card-name">{room.name}</div>
+                    <div className="room-card-desc">{room.description}</div>
+                    <div className="room-card-guests">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                      Maks {room.maxGuests} tamu
+                    </div>
+                    <div className="room-card-price">
+                      Rp {room.basePrice.toLocaleString('id-ID')} <span>/malam</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {selectedRoomObj && (
+              <div className="calendar-section">
+                <h2>Kalender Harga</h2>
+                <p>Lihat perbandingan harga tiap tanggal. Pilih tanggal check-in dan check-out.</p>
+                <div className="calendar-grid">
+                  <PriceCalendar
+                    basePrice={selectedRoomObj.basePrice}
+                    seasonalRates={selectedRoomObj.seasonalRates}
+                    selectedDate={checkIn}
+                    checkOutDate={checkOut}
+                    onSelect={handleDateSelect}
+                    offsetMonths={0}
+                  />
+                  <PriceCalendar
+                    basePrice={selectedRoomObj.basePrice}
+                    seasonalRates={selectedRoomObj.seasonalRates}
+                    selectedDate={checkIn}
+                    checkOutDate={checkOut}
+                    onSelect={handleDateSelect}
+                    offsetMonths={1}
+                  />
+                </div>
+              </div>
+            )}
           </div>
 
-          <div style={{
-            border: '1px solid var(--line)',
-            borderRadius: 24,
-            padding: 24,
-            height: 'fit-content',
-            position: 'sticky',
-            top: 100,
-            background: 'var(--card)',
-          }}>
-            <h3 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: 16, color: 'var(--text)' }}>Perkiraan Harga</h3>
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: 6, color: 'var(--muted)', textTransform: 'uppercase' }}>Pilih Tanggal</label>
-              {selectedRoomObj && (
-                <PriceCalendar
-                  basePrice={selectedRoomObj.basePrice}
-                  seasonalRates={selectedRoomObj.seasonalRates}
-                  selectedDate={checkDate}
-                  onSelect={(date) => setCheckDate(date)}
-                />
-              )}
+          <div className="booking-card">
+            <div className="booking-card-price">
+              Rp {currentPrice.toLocaleString('id-ID')} <span>/malam</span>
             </div>
-            {selectedRoomObj && (
-              <div style={{ borderTop: '1px solid var(--line)', paddingTop: 16, marginTop: 16 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, fontSize: '0.9rem', color: 'var(--muted)' }}>
-                  <span>{selectedRoomObj.name}</span>
-                  <span>Rp {currentPrice.toLocaleString('id-ID')}</span>
+            <div className="booking-card-host">{property.tenant.fullName}</div>
+
+            <div className="booking-inputs">
+              <div className="booking-input-row">
+                <div className="booking-input-cell">
+                  <label>Check-in</label>
+                  <input type="date" value={checkIn} onChange={(e) => setCheckIn(e.target.value)} />
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, fontSize: '1.1rem', color: 'var(--text)' }}>
+                <div className="booking-input-cell">
+                  <label>Check-out</label>
+                  <input type="date" value={checkOut} onChange={(e) => setCheckOut(e.target.value)} />
+                </div>
+              </div>
+              <div className="booking-input-cell full">
+                <label>Tamu</label>
+                <select>
+                  {[1,2,3,4,5,6,7,8].map((n) => (
+                    <option key={n} value={n}>{n} tamu</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <button type="button" className="btn-primary" style={{ width: '100%', marginBottom: 16 }}>
+              Pesan Sekarang
+            </button>
+
+            {(checkIn || checkOut) && (
+              <div className="booking-summary">
+                <div className="booking-row">
+                  <span>{selectedRoomObj?.name}</span>
+                  <span>Rp {currentPrice.toLocaleString('id-ID')} x {nights} malam</span>
+                </div>
+                <div className="booking-row total">
                   <span>Total</span>
-                  <span style={{ color: 'var(--primary)' }}>Rp {currentPrice.toLocaleString('id-ID')}</span>
+                  <span>Rp {totalPrice.toLocaleString('id-ID')}</span>
                 </div>
               </div>
             )}
