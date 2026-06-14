@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { getPropertyDetail } from '../services/propertyApi.js';
-import { PriceCalendar } from '../components/PriceCalendar.js';
 import { Navbar } from '../../../components/common/Navbar.js';
 import { Footer } from '../../../components/common/Footer.js';
+import { useAuth } from '../../auth/stores/AuthContext.js';
 
 interface Room {
   id: string;
@@ -29,6 +29,8 @@ interface PropertyDetail {
 
 export function PropertyDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const [property, setProperty] = useState<PropertyDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedRoom, setSelectedRoom] = useState<string>('');
@@ -221,6 +223,24 @@ export function PropertyDetailPage() {
                   <span>Total</span>
                   <span>Rp {totalPrice.toLocaleString('id-ID')}</span>
                 </div>
+                <button
+                  onClick={handleCheckout}
+                  disabled={!checkIn || !checkOut || totalPrice === 0}
+                  style={{
+                    width: '100%',
+                    padding: 14,
+                    borderRadius: 12,
+                    border: 'none',
+                    background: !checkIn || !checkOut || totalPrice === 0 ? 'var(--muted)' : 'var(--primary)',
+                    color: '#fff',
+                    fontSize: '1rem',
+                    fontWeight: 600,
+                    cursor: !checkIn || !checkOut || totalPrice === 0 ? 'not-allowed' : 'pointer',
+                    transition: 'all 0.2s',
+                  }}
+                >
+                  Checkout
+                </button>
               </div>
             )}
           </div>

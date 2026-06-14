@@ -3,6 +3,7 @@ import {
   createBookingSchema,
   updateBookingSchema,
   bookingIdSchema,
+  manualPaymentSchema,
 } from '../validations/booking.validation.js';
 import {
   createBooking,
@@ -12,6 +13,8 @@ import {
   updateBooking,
   deleteBooking,
   getAllBookings,
+  submitManualPayment,
+  cancelBooking,
 } from '../services/booking.service.js';
 import { badRequest, parseOrBad, pickParam } from '../utils/controller.utils.js';
 
@@ -87,6 +90,29 @@ export async function getAllBookingsHandler(req: Request, res: Response) {
   try {
     const bookings = await getAllBookings();
     return res.json(bookings);
+  } catch (error) {
+    return badRequest(res, (error as Error).message);
+  }
+}
+
+export async function submitManualPaymentHandler(req: Request, res: Response) {
+  const paramsParsed = parseOrBad(res, bookingIdSchema, req.params);
+  const bodyParsed = parseOrBad(res, manualPaymentSchema, req.body);
+  if (!paramsParsed || !bodyParsed) return;
+  try {
+    const booking = await submitManualPayment(paramsParsed.id, bodyParsed);
+    return res.json(booking);
+  } catch (error) {
+    return badRequest(res, (error as Error).message);
+  }
+}
+
+export async function cancelBookingHandler(req: Request, res: Response) {
+  const paramsParsed = parseOrBad(res, bookingIdSchema, req.params);
+  if (!paramsParsed) return;
+  try {
+    const booking = await cancelBooking(paramsParsed.id);
+    return res.json(booking);
   } catch (error) {
     return badRequest(res, (error as Error).message);
   }

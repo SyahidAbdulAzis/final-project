@@ -93,6 +93,11 @@ export async function getRoomsByProperty(propertyId: string) {
   return data;
 }
 
+export async function getRoomById(roomId: string) {
+  const { data } = await apiClient.get(`/rooms/${roomId}`);
+  return data;
+}
+
 export async function setAvailability(availabilityData: {
   roomId: string; date: string; isAvailable: boolean;
 }) {
