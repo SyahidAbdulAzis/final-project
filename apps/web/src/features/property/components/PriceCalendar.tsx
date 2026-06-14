@@ -13,6 +13,8 @@ interface Props {
   seasonalRates: SeasonalRate[];
   onSelect: (date: string) => void;
   selectedDate?: string;
+  checkOutDate?: string;
+  offsetMonths?: number;
 }
 
 function getDaysInMonth(year: number, month: number) {
@@ -40,10 +42,22 @@ function getPriceForDate(basePrice: number, dateStr: string, rates: SeasonalRate
     : basePrice + rate.adjustmentValue;
 }
 
-export function PriceCalendar({ basePrice, seasonalRates, onSelect, selectedDate }: Props) {
+function isBetween(dateStr: string, startStr: string, endStr: string) {
+  if (!startStr || !endStr) return false;
+  const date = new Date(dateStr).getTime();
+  const start = new Date(startStr).getTime();
+  const end = new Date(endStr).getTime();
+  return date >= start && date <= end;
+}
+
+export function PriceCalendar({ basePrice, seasonalRates, onSelect, selectedDate, checkOutDate, offsetMonths = 0 }: Props) {
   const today = new Date();
-  const [viewMonth, setViewMonth] = useState(today.getMonth());
-  const [viewYear, setViewYear] = useState(today.getFullYear());
+  const baseMonth = today.getMonth() + offsetMonths;
+  const baseYear = today.getFullYear() + Math.floor(baseMonth / 12);
+  const initialMonth = ((baseMonth % 12) + 12) % 12;
+
+  const [viewMonth, setViewMonth] = useState(initialMonth);
+  const [viewYear, setViewYear] = useState(baseYear);
 
   const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
   const dayNames = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
@@ -51,15 +65,16 @@ export function PriceCalendar({ basePrice, seasonalRates, onSelect, selectedDate
   const days = useMemo(() => {
     const totalDays = getDaysInMonth(viewYear, viewMonth);
     const firstDay = getFirstDayOfMonth(viewYear, viewMonth);
-    const cells: { day: number; price: number; key: string }[] = [];
-    for (let i = 0; i < firstDay; i++) cells.push({ day: 0, price: 0, key: `pad-${i}` });
+    const cells: { day: number; price: number; key: string; isInRange: boolean }[] = [];
+    for (let i = 0; i < firstDay; i++) cells.push({ day: 0, price: 0, key: `pad-${i}`, isInRange: false });
     for (let d = 1; d <= totalDays; d++) {
       const key = formatDateKey(viewYear, viewMonth, d);
       const price = getPriceForDate(basePrice, key, seasonalRates);
-      cells.push({ day: d, price, key });
+      const isInRange = selectedDate && checkOutDate ? isBetween(key, selectedDate, checkOutDate) : false;
+      cells.push({ day: d, price, key, isInRange });
     }
     return cells;
-  }, [viewYear, viewMonth, basePrice, seasonalRates]);
+  }, [viewYear, viewMonth, basePrice, seasonalRates, selectedDate, checkOutDate]);
 
   const prevMonth = () => {
     if (viewMonth === 0) { setViewMonth(11); setViewYear((y) => y - 1); }
@@ -74,9 +89,13 @@ export function PriceCalendar({ basePrice, seasonalRates, onSelect, selectedDate
   return (
     <div className="price-calendar">
       <div className="pc-header">
-        <button type="button" className="pc-nav" onClick={prevMonth}>{'<'}</button>
+        <button type="button" className="pc-nav" onClick={prevMonth} aria-label="Bulan sebelumnya">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
         <span className="pc-title">{monthNames[viewMonth]} {viewYear}</span>
-        <button type="button" className="pc-nav" onClick={nextMonth}>{'>'}</button>
+        <button type="button" className="pc-nav" onClick={nextMonth} aria-label="Bulan berikutnya">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
       </div>
       <div className="pc-grid">
         {dayNames.map((d) => <div key={d} className="pc-day-label">{d}</div>)}
@@ -87,7 +106,7 @@ export function PriceCalendar({ basePrice, seasonalRates, onSelect, selectedDate
             <button
               key={cell.key}
               type="button"
-              className={`pc-cell${selectedDate === cell.key ? ' pc-cell--selected' : ''}`}
+              className={`pc-cell${selectedDate === cell.key ? ' pc-cell--selected' : ''}${cell.isInRange ? ' pc-cell--range' : ''}`}
               onClick={() => onSelect(cell.key)}
             >
               <span className="pc-date">{cell.day}</span>
