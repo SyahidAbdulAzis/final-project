@@ -20,3 +20,8 @@ export async function submitManualPayment(bookingId: string, paymentData: Manual
   const { data } = await apiClient.post<BookingResponse>(`/bookings/${bookingId}/manual-payment`, paymentData);
   return data;
 }
+
+export async function cancelBooking(bookingId: string) {
+  const { data } = await apiClient.post<BookingResponse>(`/bookings/${bookingId}/cancel`);
+  return data;
+}

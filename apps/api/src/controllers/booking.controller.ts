@@ -14,6 +14,7 @@ import {
   deleteBooking,
   getAllBookings,
   submitManualPayment,
+  cancelBooking,
 } from '../services/booking.service.js';
 import { badRequest, parseOrBad, pickParam } from '../utils/controller.utils.js';
 
@@ -100,6 +101,17 @@ export async function submitManualPaymentHandler(req: Request, res: Response) {
   if (!paramsParsed || !bodyParsed) return;
   try {
     const booking = await submitManualPayment(paramsParsed.id, bodyParsed);
+    return res.json(booking);
+  } catch (error) {
+    return badRequest(res, (error as Error).message);
+  }
+}
+
+export async function cancelBookingHandler(req: Request, res: Response) {
+  const paramsParsed = parseOrBad(res, bookingIdSchema, req.params);
+  if (!paramsParsed) return;
+  try {
+    const booking = await cancelBooking(paramsParsed.id);
     return res.json(booking);
   } catch (error) {
     return badRequest(res, (error as Error).message);

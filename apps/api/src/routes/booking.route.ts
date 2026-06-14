@@ -8,6 +8,7 @@ import {
   deleteBookingHandler,
   getAllBookingsHandler,
   submitManualPaymentHandler,
+  cancelBookingHandler,
 } from '../controllers/booking.controller.js';
 
 const bookingRouter = Router();
@@ -20,5 +21,6 @@ bookingRouter.get('/bookings/room/:roomId', getRoomBookingsHandler);
 bookingRouter.put('/bookings/:id', updateBookingHandler);
 bookingRouter.delete('/bookings/:id', deleteBookingHandler);
 bookingRouter.post('/bookings/:id/manual-payment', submitManualPaymentHandler);
+bookingRouter.post('/bookings/:id/cancel', cancelBookingHandler);
 
 export { bookingRouter };

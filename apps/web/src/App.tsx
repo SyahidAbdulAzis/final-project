@@ -16,6 +16,7 @@ import {
 } from './features/property/pages/index.js';
 import { BookingPage } from './features/booking/pages/index.js';
 import { PaymentPage } from './features/payment/pages/index.js';
+import { TransactionPage } from './features/transaction/pages/index.js';
 import {
   TenantDashboardPage,
   TenantPropertiesPage,
@@ -53,6 +54,7 @@ function App() {
           {/* Booking */}
           <Route path="/booking/:roomId" element={<BookingPage />} />
           <Route path="/payment/:bookingId" element={<PaymentPage />} />
+          <Route path="/transactions" element={<TransactionPage />} />
 
           {/* Tenant Dashboard — TEMP: unprotected for preview */}
           <Route path="/tenant/dashboard" element={<TenantDashboardPage />} />

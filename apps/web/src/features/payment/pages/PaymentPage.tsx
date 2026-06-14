@@ -36,6 +36,17 @@ export function PaymentPage() {
       });
   }, [bookingId]);
 
+  // Check if booking is expired on load
+  useEffect(() => {
+    if (booking && booking.status === 'MENUNGGU_PEMBAYARAN') {
+      const oneHourInMs = 60 * 60 * 1000;
+      const timeElapsed = Date.now() - new Date(booking.createdAt).getTime();
+      if (timeElapsed > oneHourInMs) {
+        setError('Waktu pembayaran telah habis (1 jam). Booking telah kadaluarsa.');
+      }
+    }
+  }, [booking]);
+
   // Timer for 1 hour limit
   useEffect(() => {
     const interval = setInterval(() => {
