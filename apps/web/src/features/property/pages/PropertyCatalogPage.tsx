@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import { getProperties, getCategories } from '../services/propertyApi.js';
 import { Navbar } from '../../../components/common/Navbar.js';
 import { Footer } from '../../../components/common/Footer.js';
 
 interface PropertyItem {
-  id: number;
+  id: string;
   name: string;
   city: string;
   category: string;
@@ -113,7 +113,7 @@ export function PropertyCatalogPage() {
         ) : (
           <div className="catalog-grid">
             {items.map((item) => (
-              <a href={`/properties/${item.id}`} key={item.id} className="catalog-card">
+              <Link to={`/properties/${item.id}`} key={item.id} className="catalog-card">
                 <div className="catalog-card-image" style={{ backgroundImage: item.imageUrl ? `url(${item.imageUrl})` : undefined }} />
                 <div className="catalog-card-body">
                   <div className="catalog-card-title">{item.name}</div>
@@ -122,7 +122,7 @@ export function PropertyCatalogPage() {
                     Rp {item.price.toLocaleString('id-ID')} <span>/malam</span>
                   </div>
                 </div>
-              </a>
+              </Link>
             ))}
           </div>
         )}

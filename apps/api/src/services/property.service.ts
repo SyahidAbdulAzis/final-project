@@ -70,7 +70,7 @@ export async function listProperties(query: PropertyQuery) {
       }
     }
     return {
-      id: Number(prop.id),
+      id: prop.id,
       name: prop.name,
       city: prop.city,
       category: prop.category?.name || '',
