@@ -2,19 +2,21 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Navbar } from '../../../components/common/Navbar';
 import { Footer } from '../../../components/common/Footer';
-import { getUserBookings, cancelBooking } from '../../booking/services/bookingApi';
+import { getTenantBookings, confirmPayment, rejectPayment, tenantCancelBooking } from '../../booking/services/bookingApi';
 import { useAuth } from '../../auth/stores/AuthContext';
 import type { BookingResponse } from '../../../types/booking';
 
-export function TransactionPage() {
+export function TenantTransactionPage() {
   const navigate = useNavigate();
   const { user, isAuthenticated, isLoading } = useAuth();
   
   const [bookings, setBookings] = useState<BookingResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [confirming, setConfirming] = useState<string | null>(null);
+  const [rejecting, setRejecting] = useState<string | null>(null);
   const [cancelling, setCancelling] = useState<string | null>(null);
-  const [timeRemaining, setTimeRemaining] = useState<Record<string, number>>({});
+  const [filterStatus, setFilterStatus] = useState<string>('ALL');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
@@ -23,17 +25,17 @@ export function TransactionPage() {
     if (isLoading) return;
     
     if (!isAuthenticated || !user) {
-      navigate('/login/user');
+      navigate('/login/tenant');
       return;
     }
 
-    if (user.role !== 'user') {
+    if (!user.role || user.role !== 'tenant') {
       navigate('/');
       return;
     }
 
     setLoading(true);
-    getUserBookings(user.id, currentPage, 5)
+    getTenantBookings(user.id, currentPage, 5)
       .then((data) => {
         setBookings(data.bookings);
         setTotalPages(data.totalPages);
@@ -41,73 +43,11 @@ export function TransactionPage() {
         setLoading(false);
       })
       .catch((err) => {
+        console.error('Error loading tenant bookings:', err);
         setError(err instanceof Error ? err.message : 'Gagal memuat transaksi');
         setLoading(false);
       });
   }, [isAuthenticated, user, navigate, isLoading, currentPage]);
-
-  // Countdown timer for each booking
-  useEffect(() => {
-    // Initialize time remaining immediately
-    const newTimeRemaining: Record<string, number> = {};
-    bookings.forEach((booking) => {
-      if (booking.status === 'MENUNGGU_PEMBAYARAN' || booking.status === 'KADALUARSA') {
-        const oneHourInMs = 60 * 60 * 1000;
-        const timeElapsed = Date.now() - new Date(booking.createdAt).getTime();
-        const remaining = oneHourInMs - timeElapsed;
-        newTimeRemaining[booking.id] = remaining;
-      }
-    });
-    setTimeRemaining(newTimeRemaining);
-
-    // Update countdown every second
-    const interval = setInterval(() => {
-      const newTimeRemaining: Record<string, number> = {};
-      bookings.forEach((booking) => {
-        if (booking.status === 'MENUNGGU_PEMBAYARAN' || booking.status === 'KADALUARSA') {
-          const oneHourInMs = 60 * 60 * 1000;
-          const timeElapsed = Date.now() - new Date(booking.createdAt).getTime();
-          const remaining = oneHourInMs - timeElapsed;
-          newTimeRemaining[booking.id] = remaining;
-        }
-      });
-      setTimeRemaining(newTimeRemaining);
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [bookings]);
-
-  const formatTime = (ms: number) => {
-    if (ms <= 0) return '0 menit 0 detik';
-    const seconds = Math.floor(ms / 1000);
-    const minutes = Math.floor(seconds / 60);
-    const hours = Math.floor(minutes / 60);
-    
-    if (hours > 0) {
-      return `${hours} jam ${minutes % 60} menit`;
-    }
-    return `${minutes} menit ${seconds % 60} detik`;
-  };
-
-  const handleCancel = async (bookingId: string) => {
-    if (!confirm('Apakah Anda yakin ingin membatalkan booking ini?')) return;
-    
-    setCancelling(bookingId);
-    try {
-      await cancelBooking(bookingId);
-      // Refresh bookings after cancel
-      if (user) {
-        const updatedData = await getUserBookings(user.id, currentPage, 5);
-        setBookings(updatedData.bookings);
-        setTotalPages(updatedData.totalPages);
-        setTotal(updatedData.total);
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Gagal membatalkan booking');
-    } finally {
-      setCancelling(null);
-    }
-  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -143,6 +83,103 @@ export function TransactionPage() {
     }
   };
 
+  const handleConfirm = async (bookingId: string) => {
+    if (!user) return;
+    
+    if (!confirm('Apakah Anda yakin ingin mengkonfirmasi pembayaran ini?')) return;
+    
+    setConfirming(bookingId);
+    try {
+      await confirmPayment(bookingId, user.id);
+      // Refresh bookings after confirm
+      const updatedData = await getTenantBookings(user.id, currentPage, 5);
+      setBookings(updatedData.bookings);
+      setTotalPages(updatedData.totalPages);
+      setTotal(updatedData.total);
+    } catch (err) {
+      console.error('Error confirming payment:', err);
+      setError(err instanceof Error ? err.message : 'Gagal mengkonfirmasi pembayaran');
+    } finally {
+      setConfirming(null);
+    }
+  };
+
+  const handleReject = async (bookingId: string) => {
+    if (!user) return;
+    
+    if (!confirm('Apakah Anda yakin ingin menolak pembayaran ini? Status akan kembali ke Menunggu Pembayaran.')) return;
+    
+    setRejecting(bookingId);
+    try {
+      await rejectPayment(bookingId, user.id);
+      // Refresh bookings after reject
+      const updatedData = await getTenantBookings(user.id, currentPage, 5);
+      setBookings(updatedData.bookings);
+      setTotalPages(updatedData.totalPages);
+      setTotal(updatedData.total);
+    } catch (err) {
+      console.error('Error rejecting payment:', err);
+      setError(err instanceof Error ? err.message : 'Gagal menolak pembayaran');
+    } finally {
+      setRejecting(null);
+    }
+  };
+
+  const handleCancel = async (bookingId: string) => {
+    if (!user) return;
+    
+    if (!confirm('Apakah Anda yakin ingin membatalkan pesanan ini?')) return;
+    
+    setCancelling(bookingId);
+    try {
+      await tenantCancelBooking(bookingId, user.id);
+      // Refresh bookings after cancel
+      const updatedData = await getTenantBookings(user.id, currentPage, 5);
+      setBookings(updatedData.bookings);
+      setTotalPages(updatedData.totalPages);
+      setTotal(updatedData.total);
+    } catch (err) {
+      console.error('Error cancelling booking:', err);
+      setError(err instanceof Error ? err.message : 'Gagal membatalkan pesanan');
+    } finally {
+      setCancelling(null);
+    }
+  };
+
+  const filteredBookings = filterStatus === 'ALL' 
+    ? bookings 
+    : bookings.filter(b => b.status === filterStatus);
+
+  // Add error boundary handling
+  if (error && bookings.length === 0) {
+    return (
+      <div className="layout">
+        <Navbar />
+        <main style={{ padding: 40, maxWidth: 1360, margin: '0 auto' }}>
+          <div style={{ padding: 16, borderRadius: 8, backgroundColor: '#fee', color: '#c33', marginBottom: 24 }}>
+            {error}
+          </div>
+          <button
+            onClick={() => window.location.reload()}
+            style={{
+              padding: '10px 20px',
+              borderRadius: 8,
+              border: '1px solid var(--primary)',
+              background: 'var(--primary)',
+              color: '#fff',
+              fontSize: '0.9rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}
+          >
+            Reload Page
+          </button>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
   if (loading) {
     return (
       <div className="layout">
@@ -161,10 +198,10 @@ export function TransactionPage() {
       <main style={{ padding: '28px 32px', maxWidth: 1360, margin: '0 auto' }}>
         <div style={{ marginBottom: 24 }}>
           <h1 style={{ fontSize: '1.6rem', fontWeight: 700, marginBottom: 6, color: 'var(--text)' }}>
-            Transaksi Saya
+            Manajemen Transaksi Tenant
           </h1>
           <p style={{ color: 'var(--muted)', fontSize: '0.9rem' }}>
-            Riwayat booking dan pembayaran Anda
+            Kelola pesanan dan konfirmasi pembayaran untuk properti Anda
           </p>
         </div>
 
@@ -174,7 +211,30 @@ export function TransactionPage() {
           </div>
         )}
 
-        {bookings.length === 0 ? (
+        {/* Status Filter */}
+        <div style={{ marginBottom: 24, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          {['ALL', 'MENUNGGU_PEMBAYARAN', 'MENUNGGU_KONFIRMASI', 'DIKONFIRMASI', 'DIBATALKAN', 'KADALUARSA'].map((status) => (
+            <button
+              key={status}
+              onClick={() => setFilterStatus(status)}
+              style={{
+                padding: '8px 16px',
+                borderRadius: 20,
+                border: filterStatus === status ? '2px solid var(--primary)' : '1px solid var(--line)',
+                background: filterStatus === status ? 'var(--primary)' : '#fff',
+                color: filterStatus === status ? '#fff' : 'var(--text)',
+                fontSize: '0.85rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+              }}
+            >
+              {status === 'ALL' ? 'Semua' : getStatusLabel(status)}
+            </button>
+          ))}
+        </div>
+
+        {filteredBookings.length === 0 ? (
           <div style={{ 
             padding: 48, 
             borderRadius: 16, 
@@ -182,12 +242,17 @@ export function TransactionPage() {
             textAlign: 'center',
             color: 'var(--muted)'
           }}>
-            <p style={{ fontSize: '1.1rem', marginBottom: 8 }}>Belum ada transaksi</p>
-            <p style={{ fontSize: '0.9rem' }}>Mulai booking properti untuk melihat riwayat transaksi Anda</p>
+            <p style={{ fontSize: '1.1rem', marginBottom: 8 }}>Tidak ada transaksi</p>
+            <p style={{ fontSize: '0.9rem' }}>
+              {filterStatus === 'ALL' 
+                ? 'Belum ada pesanan untuk properti Anda' 
+                : `Tidak ada pesanan dengan status ${getStatusLabel(filterStatus)}`
+              }
+            </p>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            {bookings.map((booking) => (
+            {filteredBookings.map((booking) => (
               <div
                 key={booking.id}
                 style={{
@@ -200,10 +265,13 @@ export function TransactionPage() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
                   <div>
                     <h3 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: 4, color: 'var(--text)' }}>
-                      {booking.room.name}
+                      {booking.room?.name || 'Unknown Room'}
                     </h3>
                     <p style={{ color: 'var(--muted)', fontSize: '0.9rem' }}>
-                      {booking.room.property.name} - {booking.room.property.city}
+                      {booking.room?.property?.name || 'Unknown Property'} - {booking.room?.property?.city || 'Unknown City'}
+                    </p>
+                    <p style={{ color: 'var(--muted)', fontSize: '0.85rem', marginTop: 4 }}>
+                      Penyewa: {booking.user?.fullName || booking.user?.email || 'Unknown User'}
                     </p>
                   </div>
                   <div
@@ -245,33 +313,38 @@ export function TransactionPage() {
                   </div>
                 </div>
 
-                <div style={{ borderTop: '1px solid var(--line)', paddingTop: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div>
-                    <div style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>
-                      Booking pada {new Date(booking.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                {/* Payment Proof Section */}
+                {booking.payment && booking.payment.proofUrl && (
+                  <div style={{ marginBottom: 16, padding: 16, backgroundColor: '#f5f5f5', borderRadius: 8 }}>
+                    <div style={{ fontSize: '0.85rem', fontWeight: 600, marginBottom: 8, color: 'var(--text)' }}>
+                      Bukti Pembayaran
                     </div>
-                    {(booking.status === 'MENUNGGU_PEMBAYARAN' || booking.status === 'KADALUARSA') && (
-                      <div style={{ fontSize: '0.85rem', marginTop: 4 }}>
-                        {timeRemaining[booking.id] !== undefined && (
-                          <span style={{ 
-                            color: timeRemaining[booking.id] <= 0 ? '#f44336' : '#ff9800',
-                            fontWeight: 600 
-                          }}>
-                            {timeRemaining[booking.id] <= 0 
-                              ? 'Waktu habis' 
-                              : `Sisa waktu: ${formatTime(timeRemaining[booking.id])}`
-                            }
-                          </span>
-                        )}
-                      </div>
-                    )}
+                    <img
+                      src={booking.payment.proofUrl}
+                      alt="Bukti pembayaran"
+                      style={{
+                        width: '100%',
+                        maxWidth: 300,
+                        borderRadius: 8,
+                        border: '1px solid var(--line)',
+                      }}
+                    />
+                    <div style={{ fontSize: '0.8rem', color: 'var(--muted)', marginTop: 8 }}>
+                      Diupload pada {booking.payment.uploadedAt ? new Date(booking.payment.uploadedAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'N/A'}
+                    </div>
+                  </div>
+                )}
+
+                <div style={{ borderTop: '1px solid var(--line)', paddingTop: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>
+                    Booking pada {new Date(booking.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                   </div>
                   <div style={{ display: 'flex', gap: 8 }}>
-                    {booking.status === 'MENUNGGU_PEMBAYARAN' && timeRemaining[booking.id] > 0 && (
+                    {booking.status === 'MENUNGGU_KONFIRMASI' && (
                       <>
                         <button
-                          onClick={() => handleCancel(booking.id)}
-                          disabled={cancelling === booking.id}
+                          onClick={() => handleReject(booking.id)}
+                          disabled={rejecting === booking.id}
                           style={{
                             padding: '10px 20px',
                             borderRadius: 8,
@@ -280,14 +353,15 @@ export function TransactionPage() {
                             color: '#f44336',
                             fontSize: '0.9rem',
                             fontWeight: 600,
-                            cursor: cancelling === booking.id ? 'not-allowed' : 'pointer',
+                            cursor: rejecting === booking.id ? 'not-allowed' : 'pointer',
                             transition: 'all 0.2s',
                           }}
                         >
-                          {cancelling === booking.id ? 'Membatalkan...' : 'Batalkan'}
+                          {rejecting === booking.id ? 'Menolak...' : 'Tolak'}
                         </button>
                         <button
-                          onClick={() => navigate(`/payment/${booking.id}`)}
+                          onClick={() => handleConfirm(booking.id)}
+                          disabled={confirming === booking.id}
                           style={{
                             padding: '10px 20px',
                             borderRadius: 8,
@@ -296,18 +370,32 @@ export function TransactionPage() {
                             color: '#fff',
                             fontSize: '0.9rem',
                             fontWeight: 600,
-                            cursor: 'pointer',
+                            cursor: confirming === booking.id ? 'not-allowed' : 'pointer',
                             transition: 'all 0.2s',
                           }}
                         >
-                          Bayar Sekarang
+                          {confirming === booking.id ? 'Mengkonfirmasi...' : 'Konfirmasi'}
                         </button>
                       </>
                     )}
-                    {booking.status === 'KADALUARSA' && (
-                      <span style={{ fontSize: '0.85rem', color: '#f44336', fontWeight: 600 }}>
-                        Booking Kadaluarsa
-                      </span>
+                    {booking.status === 'MENUNGGU_PEMBAYARAN' && !booking.payment && (
+                      <button
+                        onClick={() => handleCancel(booking.id)}
+                        disabled={cancelling === booking.id}
+                        style={{
+                          padding: '10px 20px',
+                          borderRadius: 8,
+                          border: '1px solid #f44336',
+                          background: '#fff',
+                          color: '#f44336',
+                          fontSize: '0.9rem',
+                          fontWeight: 600,
+                          cursor: cancelling === booking.id ? 'not-allowed' : 'pointer',
+                          transition: 'all 0.2s',
+                        }}
+                      >
+                        {cancelling === booking.id ? 'Membatalkan...' : 'Batalkan Pesanan'}
+                      </button>
                     )}
                   </div>
                 </div>

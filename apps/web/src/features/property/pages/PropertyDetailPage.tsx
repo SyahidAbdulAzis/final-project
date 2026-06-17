@@ -4,6 +4,7 @@ import { getPropertyDetail } from '../services/propertyApi.js';
 import { Navbar } from '../../../components/common/Navbar.js';
 import { Footer } from '../../../components/common/Footer.js';
 import { useAuth } from '../../auth/stores/AuthContext.js';
+import { PriceCalendar } from '../components/PriceCalendar.js';
 
 interface Room {
   id: string;
@@ -94,6 +95,23 @@ export function PropertyDetailPage() {
     } else {
       setCheckIn(date);
     }
+  };
+
+  const handleCheckout = () => {
+    if (!user) {
+      alert('Silakan login terlebih dahulu untuk melakukan booking');
+      navigate('/login/user');
+      return;
+    }
+    if (!selectedRoom) {
+      alert('Silakan pilih kamar terlebih dahulu');
+      return;
+    }
+    if (!checkIn || !checkOut) {
+      alert('Silakan pilih tanggal check-in dan check-out');
+      return;
+    }
+    navigate(`/booking/${selectedRoom}?checkIn=${checkIn}&checkOut=${checkOut}`);
   };
 
   return (

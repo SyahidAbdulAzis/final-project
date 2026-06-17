@@ -5,6 +5,7 @@ import { Footer } from '../../../components/common/Footer';
 import { getRoomById } from '../../property/services/propertyApi';
 import { useBooking } from '../hooks/useBooking';
 import { useAuth } from '../../auth/stores/AuthContext';
+import { getRoomAvailability } from '../services/bookingApi';
 
 interface Room {
   id: string;
@@ -86,6 +87,18 @@ export function BookingPage() {
       return;
     }
 
+    // Check room availability before booking
+    try {
+      const unavailableDates = await getRoomAvailability(room.id, checkIn, checkOut);
+      if (unavailableDates.length > 0) {
+        alert('Kamar sudah dibooking untuk tanggal tersebut. Silakan pilih tanggal lain.');
+        return;
+      }
+    } catch (err) {
+      console.error('Error checking availability:', err);
+      // Continue with booking attempt even if availability check fails
+    }
+
     const bookingData = {
       userId: user.id,
       roomId: room.id,
@@ -98,6 +111,8 @@ export function BookingPage() {
     if (result) {
       alert('CHECKOUT BERHASIL SILAHKAN PAYMENT');
       navigate(`/payment/${result.id}`);
+    } else if (error) {
+      alert(error);
     }
   };
 

@@ -14,9 +14,11 @@ import {
   PropertyCatalogPage,
   PropertyDetailPage,
 } from './features/property/pages/index.js';
-import { BookingPage } from './features/booking/pages/index.js';
+import { BookingPage, BookingHistoryPage } from './features/booking/pages/index.js';
 import { PaymentPage } from './features/payment/pages/index.js';
 import { TransactionPage } from './features/transaction/pages/index.js';
+import { TenantTransactionPage } from './features/tenant/pages/index.js';
+import { ReportPage, PropertyReportPage } from './features/report/pages/index.js';
 import {
   TenantDashboardPage,
   TenantPropertiesPage,
@@ -55,6 +57,14 @@ function App() {
           <Route path="/booking/:roomId" element={<BookingPage />} />
           <Route path="/payment/:bookingId" element={<PaymentPage />} />
           <Route path="/transactions" element={<TransactionPage />} />
+          <Route path="/booking-history" element={<BookingHistoryPage />} />
+
+          {/* Tenant Transaction Management */}
+          <Route path="/tenant/transactions" element={<TenantTransactionPage />} />
+
+          {/* Tenant Reports */}
+          <Route path="/tenant/reports" element={<ReportPage />} />
+          <Route path="/tenant/reports/property" element={<PropertyReportPage />} />
 
           {/* Tenant Dashboard — TEMP: unprotected for preview */}
           <Route path="/tenant/dashboard" element={<TenantDashboardPage />} />

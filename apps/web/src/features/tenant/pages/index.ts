@@ -1,0 +1,1 @@
+export { TenantTransactionPage } from './TenantTransactionPage';
