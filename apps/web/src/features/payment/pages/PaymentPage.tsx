@@ -19,8 +19,7 @@ export function PaymentPage() {
   const [submitting, setSubmitting] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [pageLoadTime] = useState(Date.now());
-  const [timeRemaining, setTimeRemaining] = useState(60 * 60 * 1000); // 1 hour in milliseconds
+  const [timeRemaining, setTimeRemaining] = useState<number>(0);
 
   useEffect(() => {
     if (!bookingId) return;
@@ -36,22 +35,28 @@ export function PaymentPage() {
       });
   }, [bookingId]);
 
-  // Check if booking is expired on load
+  // Check if booking is expired on load and initialize countdown
   useEffect(() => {
     if (booking && booking.status === 'MENUNGGU_PEMBAYARAN') {
       const oneHourInMs = 60 * 60 * 1000;
       const timeElapsed = Date.now() - new Date(booking.createdAt).getTime();
+      const remaining = oneHourInMs - timeElapsed;
+      setTimeRemaining(remaining);
+      
       if (timeElapsed > oneHourInMs) {
         setError('Waktu pembayaran telah habis (1 jam). Booking telah kadaluarsa.');
       }
     }
   }, [booking]);
 
-  // Timer for 1 hour limit
+  // Timer for 1 hour limit based on booking creation time
   useEffect(() => {
+    if (!booking || booking.status !== 'MENUNGGU_PEMBAYARAN') return;
+    
     const interval = setInterval(() => {
-      const elapsed = Date.now() - pageLoadTime;
-      const remaining = 60 * 60 * 1000 - elapsed;
+      const oneHourInMs = 60 * 60 * 1000;
+      const timeElapsed = Date.now() - new Date(booking.createdAt).getTime();
+      const remaining = oneHourInMs - timeElapsed;
       setTimeRemaining(remaining);
       
       if (remaining <= 0) {
@@ -60,7 +65,7 @@ export function PaymentPage() {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [pageLoadTime]);
+  }, [booking]);
 
   const formatTime = (ms: number) => {
     const seconds = Math.floor(ms / 1000);
