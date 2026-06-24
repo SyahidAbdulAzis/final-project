@@ -1,5 +1,9 @@
 import { useState } from 'react';
 import { createSeasonalRate, deleteSeasonalRate } from '../../services/propertyApi.js';
+import { TenantPagination } from '../../../../components/common/TenantPagination.js';
+import { Dropdown } from '../../../../components/common/Dropdown.js';
+
+const PAGE_SIZE = 10;
 
 interface Props {
   selectedRoom: string;
@@ -9,6 +13,10 @@ interface Props {
 
 export function SeasonalTab({ selectedRoom, seasonalRates, refresh }: Props) {
   const [rateName, setRateName] = useState('');
+  const [page, setPage] = useState(1);
+
+  const totalPages = Math.max(1, Math.ceil(seasonalRates.length / PAGE_SIZE));
+  const paged = seasonalRates.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
   const [rateStart, setRateStart] = useState('');
   const [rateEnd, setRateEnd] = useState('');
   const [rateType, setRateType] = useState<'NOMINAL' | 'PERCENTAGE'>('PERCENTAGE');
@@ -43,10 +51,15 @@ export function SeasonalTab({ selectedRoom, seasonalRates, refresh }: Props) {
           <div className="tenant-form-group"><label>Selesai</label><input type="date" value={rateEnd} onChange={(e) => setRateEnd(e.target.value)} /></div>
           <div className="tenant-form-group">
             <label>Tipe</label>
-            <select value={rateType} onChange={(e) => setRateType(e.target.value as 'NOMINAL' | 'PERCENTAGE')}>
-              <option value="PERCENTAGE">Persentase (%)</option>
-              <option value="NOMINAL">Nominal (Rp)</option>
-            </select>
+            <Dropdown
+              value={rateType}
+              options={[
+                { value: 'PERCENTAGE', label: 'Persentase (%)' },
+                { value: 'NOMINAL', label: 'Nominal (Rp)' },
+              ]}
+              onChange={(value) => setRateType(value as 'NOMINAL' | 'PERCENTAGE')}
+              variant="pill"
+            />
           </div>
           <div className="tenant-form-group"><label>Nilai</label><input type="number" value={rateValue} onChange={(e) => setRateValue(Number(e.target.value))} /></div>
         </div>
@@ -58,7 +71,7 @@ export function SeasonalTab({ selectedRoom, seasonalRates, refresh }: Props) {
           <table className="tenant-table">
             <thead><tr><th>Nama</th><th>Periode</th><th>Nilai</th><th style={{ textAlign: 'right' }}>Aksi</th></tr></thead>
             <tbody>
-              {seasonalRates.map((r) => (
+              {paged.map((r) => (
                 <tr key={r.id}>
                   <td>{r.name}</td>
                   <td>{new Date(r.startDate).toLocaleDateString('id-ID')} - {new Date(r.endDate).toLocaleDateString('id-ID')}</td>
@@ -68,6 +81,7 @@ export function SeasonalTab({ selectedRoom, seasonalRates, refresh }: Props) {
               ))}
             </tbody>
           </table>
+          <TenantPagination page={page} totalPages={totalPages} onPageChange={setPage} />
         </div>
       </div>
     </div>

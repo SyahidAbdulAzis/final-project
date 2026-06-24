@@ -36,7 +36,7 @@ export async function createRoomHandler(req: AuthRequest, res: Response) {
   const parsed = parseOrBad(res, roomCreateSchema, req.body);
   if (!parsed) return;
   try {
-    const room = await createRoom({ ...parsed, description: parsed.description || '' });
+    const room = await createRoom(req.user!.id, { ...parsed, description: parsed.description || '' });
     return res.status(201).json(room);
   } catch (error) {
     return badRequest(res, (error as Error).message);
@@ -49,7 +49,7 @@ export async function updateRoomHandler(req: AuthRequest, res: Response) {
   const parsed = parseOrBad(res, roomUpdateSchema, req.body);
   if (!parsed) return;
   try {
-    const room = await updateRoom(id, parsed);
+    const room = await updateRoom(id, req.user!.id, parsed);
     return res.json(room);
   } catch (error) {
     return badRequest(res, (error as Error).message);
@@ -60,7 +60,7 @@ export async function deleteRoomHandler(req: AuthRequest, res: Response) {
   const id = pickParam(req.params.id);
   if (!id) return badRequest(res, 'Id wajib diisi');
   try {
-    await deleteRoom(id);
+    await deleteRoom(id, req.user!.id);
     return res.json({ message: 'Room berhasil dihapus' });
   } catch (error) {
     return badRequest(res, (error as Error).message);

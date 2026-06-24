@@ -13,7 +13,7 @@ export const propertyRouter = Router();
 
 propertyRouter.get('/properties', getProperties);
 propertyRouter.get('/properties/:id', getPropertyDetail);
-propertyRouter.post('/properties', verifyToken, requireRole('TENANT'), createPropertyHandler);
-propertyRouter.get('/tenant/properties', verifyToken, requireRole('TENANT'), getTenantPropertiesHandler);
-propertyRouter.patch('/properties/:id', verifyToken, requireRole('TENANT'), updatePropertyHandler);
-propertyRouter.delete('/properties/:id', verifyToken, requireRole('TENANT'), deletePropertyHandler);
+propertyRouter.post('/properties', verifyToken as any, requireRole('TENANT') as any, createPropertyHandler as any);
+propertyRouter.get('/tenant/properties', verifyToken as any, requireRole('TENANT') as any, getTenantPropertiesHandler as any);
+propertyRouter.patch('/properties/:id', verifyToken as any, requireRole('TENANT') as any, updatePropertyHandler as any);
+propertyRouter.delete('/properties/:id', verifyToken as any, requireRole('TENANT') as any, deletePropertyHandler as any);

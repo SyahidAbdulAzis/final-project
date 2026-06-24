@@ -1,5 +1,8 @@
 import { useState } from 'react';
 import { bulkAvailability } from '../../services/propertyApi.js';
+import { TenantPagination } from '../../../../components/common/TenantPagination.js';
+
+const PAGE_SIZE = 10;
 
 interface Props {
   selectedRoom: string;
@@ -11,6 +14,11 @@ export function AvailabilityTab({ selectedRoom, availabilities, refresh }: Props
   const [dateStart, setDateStart] = useState('');
   const [dateEnd, setDateEnd] = useState('');
   const [isAvailable, setIsAvailable] = useState(true);
+  const [page, setPage] = useState(1);
+
+  const sorted = [...availabilities].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
+  const paged = sorted.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const handleBulk = async () => {
     if (!dateStart || !dateEnd || !selectedRoom) return;
@@ -55,7 +63,7 @@ export function AvailabilityTab({ selectedRoom, availabilities, refresh }: Props
           <table className="tenant-table">
             <thead><tr><th>Tanggal</th><th>Status</th></tr></thead>
             <tbody>
-              {availabilities.map((a) => (
+              {paged.map((a) => (
                 <tr key={a.id}>
                   <td>{new Date(a.date).toLocaleDateString('id-ID')}</td>
                   <td><span className={`badge ${a.isAvailable ? 'badge-green' : 'badge-red'}`}>{a.isAvailable ? 'Tersedia' : 'Tidak Tersedia'}</span></td>
@@ -63,6 +71,7 @@ export function AvailabilityTab({ selectedRoom, availabilities, refresh }: Props
               ))}
             </tbody>
           </table>
+          <TenantPagination page={page} totalPages={totalPages} onPageChange={setPage} />
         </div>
       </div>
     </div>

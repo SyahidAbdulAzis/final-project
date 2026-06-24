@@ -1,4 +1,4 @@
-import type { PropertyItem } from '../../../types/property';
+﻿import type { PropertyItem } from '../../../types/property';
 
 export const dummyCards: PropertyItem[] = [
   { id: '9001', name: 'Vila Panorama Ubud', city: 'Bali', category: 'Vila', price: 1250000, description: 'Dummy properti untuk preview tampilan.', available: true, imageUrl: 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=900&q=80', rating: 4.9 },
