@@ -19,7 +19,7 @@ const initialQuery: PropertyQuery = {
 export function LandingPage() {
   const navigate = useNavigate();
   const [query, setState] = useState(initialQuery);
-  const { data, loading } = useProperties(query);
+  const { data, meta, loading } = useProperties(query);
 
   const setQuery = (next: Partial<PropertyQuery>) => {
     if (next.city || next.checkIn || next.checkOut) {
@@ -40,7 +40,24 @@ export function LandingPage() {
       <Navbar query={query} setQuery={setQuery} />
       <main className="page-main">
         <HeroSection />
-        <PropertyList loading={loading} items={data} />
+        <section className="listing-section">
+          <div className="listing-heading">
+            <div>
+              <h2>Jelajahi Properti</h2>
+              <p>Temukan tempat menginap terbaik di seluruh Indonesia</p>
+            </div>
+            {!loading && meta.total > 0 && (
+              <span className="listing-count">{meta.total} properti tersedia</span>
+            )}
+          </div>
+          <PropertyList
+            loading={loading}
+            items={data}
+            page={meta.page}
+            totalPages={meta.totalPages}
+            onPageChange={(page) => setQuery({ page })}
+          />
+        </section>
       </main>
       <Footer />
     </div>
