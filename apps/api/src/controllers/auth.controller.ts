@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import type { AuthRequest } from '../middlewares/auth.middleware.js';
 import {
   changePasswordSchema,
   emailOnlySchema,
@@ -92,9 +93,14 @@ export async function resetPasswordHandler(req: Request, res: Response) {
   }
 }
 
-export async function profileGetHandler(req: Request, res: Response) {
+function forbidden(res: Response) {
+  return res.status(403).json({ message: 'Akses ditolak' });
+}
+
+export async function profileGetHandler(req: AuthRequest, res: Response) {
   const email = pickParam(req.params.email);
   if (!email) return badRequest(res, 'Email wajib diisi');
+  if (email.toLowerCase() !== req.user?.email.toLowerCase()) return forbidden(res);
   try {
     return res.json(await getProfile(email));
   } catch (error) {
@@ -102,13 +108,14 @@ export async function profileGetHandler(req: Request, res: Response) {
   }
 }
 
-export async function profilePatchHandler(req: Request, res: Response) {
+export async function profilePatchHandler(req: AuthRequest, res: Response) {
   const bodyParsed = parseOrBad(res, profileSchema, req.body);
   const email = pickParam(req.params.email);
   if (!email) return badRequest(res, 'Email wajib diisi');
+  if (email.toLowerCase() !== req.user?.email.toLowerCase()) return forbidden(res);
   if (!bodyParsed) return;
   try {
-    const result = await updateProfile(email, bodyParsed.fullName, bodyParsed.photoUrl, bodyParsed.email, bodyParsed.phone);
+    const result = await updateProfile(email, bodyParsed.fullName, bodyParsed.photoUrl, bodyParsed.email);
     if (result.verificationToken) {
       await sendEmail(result.email, 'Verifikasi Akun StayEase', verificationEmailTemplate('', result.verificationToken));
     }
@@ -118,10 +125,11 @@ export async function profilePatchHandler(req: Request, res: Response) {
   }
 }
 
-export async function changePasswordHandler(req: Request, res: Response) {
+export async function changePasswordHandler(req: AuthRequest, res: Response) {
   const bodyParsed = parseOrBad(res, changePasswordSchema, req.body);
   const email = pickParam(req.params.email);
   if (!email) return badRequest(res, 'Email wajib diisi');
+  if (email.toLowerCase() !== req.user?.email.toLowerCase()) return forbidden(res);
   if (!bodyParsed) return;
   try {
     return res.json(await changePassword(email, bodyParsed.oldPassword, bodyParsed.newPassword));
