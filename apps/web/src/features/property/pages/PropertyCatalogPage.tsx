@@ -4,6 +4,11 @@ import { getProperties, getCategories } from '../services/propertyApi.js';
 import { Navbar } from '../../../components/common/Navbar.js';
 import { Footer } from '../../../components/common/Footer.js';
 
+interface ReviewItem {
+  rating: number;
+  comment: string;
+}
+
 interface PropertyItem {
   id: string;
   name: string;
@@ -13,6 +18,9 @@ interface PropertyItem {
   price: number;
   imageUrl: string;
   available: boolean;
+  rating?: number;
+  reviewCount: number;
+  reviews: ReviewItem[];
 }
 
 interface Meta {
@@ -118,6 +126,33 @@ export function PropertyCatalogPage() {
                 <div className="catalog-card-body">
                   <div className="catalog-card-title">{item.name}</div>
                   <div className="catalog-card-meta">{item.city} · {item.category}</div>
+                  <div className="catalog-card-rating" style={{ fontSize: '0.85rem', color: '#f5a623', marginBottom: 4 }}>
+                    {item.rating ? (
+                      <span>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style={{ verticalAlign: 'middle', marginRight: 2 }}>
+                          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                        </svg>
+                        {item.rating} ({item.reviewCount})
+                      </span>
+                    ) : (
+                      <span style={{ color: 'var(--muted)' }}>Belum ada rating</span>
+                    )}
+                  </div>
+                  {item.reviews.length > 0 && (
+                    <div style={{ marginTop: 6, borderTop: '1px solid var(--border)', paddingTop: 6 }}>
+                      {item.reviews.slice(0, 2).map((rev, i) => (
+                        <div key={i} style={{ fontSize: '0.78rem', color: 'var(--text)', marginBottom: 4, lineHeight: 1.4 }}>
+                          <span style={{ color: '#f5a623' }}>
+                            {'★'.repeat(rev.rating)}{'☆'.repeat(5 - rev.rating)}
+                          </span>
+                          <span style={{ color: 'var(--muted)', marginLeft: 4 }}>— {rev.comment}</span>
+                        </div>
+                      ))}
+                      {item.reviews.length > 2 && (
+                        <div style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>+{item.reviews.length - 2} ulasan lainnya</div>
+                      )}
+                    </div>
+                  )}
                   <div className="catalog-card-price">
                     Rp {item.price.toLocaleString('id-ID')} <span>/malam</span>
                   </div>

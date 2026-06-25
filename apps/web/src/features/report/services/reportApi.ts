@@ -46,6 +46,28 @@ export interface SalesReportByTransaction {
   createdAt: string;
 }
 
+export interface SalesChartItem {
+  propertyId: string;
+  propertyName: string;
+  totalSales: number;
+  percentage: number;
+}
+
+export async function getSalesChartData(
+  tenantId: string,
+  startDate?: string,
+  endDate?: string,
+) {
+  const params = new URLSearchParams();
+  if (startDate) params.append('startDate', startDate);
+  if (endDate) params.append('endDate', endDate);
+
+  const { data } = await apiClient.get<SalesChartItem[]>(
+    `/reports/tenant/${tenantId}/sales/chart?${params.toString()}`
+  );
+  return data;
+}
+
 export interface PropertyAvailabilityData {
   propertyId: string;
   propertyName: string;
