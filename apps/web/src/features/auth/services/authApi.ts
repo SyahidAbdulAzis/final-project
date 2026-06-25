@@ -35,8 +35,8 @@ export async function getProfileApi(email: string) {
   return data;
 }
 
-export async function updateProfileApi(email: string, fullName?: string, photoUrl?: string) {
-  const { data } = await apiClient.patch(`/auth/profile/${email}`, { fullName, photoUrl });
+export async function updateProfileApi(email: string, fullName?: string, photoUrl?: string, newEmail?: string) {
+  const { data } = await apiClient.patch(`/auth/profile/${email}`, { fullName, photoUrl, email: newEmail });
   return data;
 }
 

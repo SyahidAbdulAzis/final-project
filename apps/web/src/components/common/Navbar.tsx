@@ -55,7 +55,9 @@ function UserActions() {
 
   return (
     <div className="nav-actions">
-      <a href="/register/tenant" className="host-link">Menjadi Tuan Rumah</a>
+      {user?.role === 'user' && (
+        <a href="/register/tenant" className="host-link">Menjadi Tuan Rumah</a>
+      )}
       <div className="account-dropdown">
         <button
           className="account-trigger profile-trigger"
@@ -82,6 +84,23 @@ function UserActions() {
             </div>
             <div className="account-divider" />
             <a href="/profile" className="account-item">Profil</a>
+            {user?.role === 'user' && (
+              <>
+                <a href="/transactions" className="account-item">Cek Transaksi</a>
+                <a href="/booking-history" className="account-item">Riwayat Pemesanan</a>
+              </>
+            )}
+            {user?.role === 'tenant' && (
+              <>
+                <a href="/tenant/dashboard" className="account-item">Dashboard</a>
+                <a href="/tenant/properties" className="account-item">Properti Saya</a>
+                <a href="/tenant/categories" className="account-item">Kategori</a>
+                <a href="/tenant/rooms" className="account-item">Kamar</a>
+                <a href="/tenant/availability" className="account-item">Ketersediaan</a>
+                <a href="/tenant/transactions" className="account-item">Manajemen Transaksi</a>
+                <a href="/tenant/reports" className="account-item">Report Penjualan</a>
+              </>
+            )}
             <a href="/" className="account-item" onClick={(e) => { e.preventDefault(); logout(); }}>Keluar</a>
           </div>
         )}

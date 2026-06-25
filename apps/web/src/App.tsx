@@ -1,7 +1,6 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { LandingPage } from './features/landing/pages/LandingPage';
 import { AuthProvider } from './features/auth/stores/AuthContext.js';
-import { ProtectedRoute } from './features/auth/components/ProtectedRoute.js';
 import {
   LoginPage,
   RegisterPage,
@@ -11,6 +10,22 @@ import {
   ResetPasswordPage,
   ProfilePage,
 } from './features/auth/pages/index.js';
+import {
+  PropertyCatalogPage,
+  PropertyDetailPage,
+} from './features/property/pages/index.js';
+import { BookingPage, BookingHistoryPage } from './features/booking/pages/index.js';
+import { PaymentPage } from './features/payment/pages/index.js';
+import { TransactionPage } from './features/transaction/pages/index.js';
+import { TenantTransactionPage } from './features/tenant/pages/index.js';
+import { ReportPage, PropertyReportPage } from './features/report/pages/index.js';
+import {
+  TenantDashboardPage,
+  TenantPropertiesPage,
+  TenantCategoriesPage,
+  TenantRoomsPage,
+  TenantAvailabilityPage,
+} from './features/property/tenant/pages/index.js';
 
 function App() {
   return (
@@ -32,14 +47,31 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/forgot-password/:role" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
-          <Route
-            path="/profile"
-            element={
-              <ProtectedRoute>
-                <ProfilePage />
-              </ProtectedRoute>
-            }
-          />
+          <Route path="/profile" element={<ProfilePage />} />
+
+          {/* Property Management */}
+          <Route path="/properties" element={<PropertyCatalogPage />} />
+          <Route path="/properties/:id" element={<PropertyDetailPage />} />
+
+          {/* Booking */}
+          <Route path="/booking/:roomId" element={<BookingPage />} />
+          <Route path="/payment/:bookingId" element={<PaymentPage />} />
+          <Route path="/transactions" element={<TransactionPage />} />
+          <Route path="/booking-history" element={<BookingHistoryPage />} />
+
+          {/* Tenant Transaction Management */}
+          <Route path="/tenant/transactions" element={<TenantTransactionPage />} />
+
+          {/* Tenant Reports */}
+          <Route path="/tenant/reports" element={<ReportPage />} />
+          <Route path="/tenant/reports/property" element={<PropertyReportPage />} />
+
+          {/* Tenant Dashboard — TEMP: unprotected for preview */}
+          <Route path="/tenant/dashboard" element={<TenantDashboardPage />} />
+          <Route path="/tenant/properties" element={<TenantPropertiesPage />} />
+          <Route path="/tenant/categories" element={<TenantCategoriesPage />} />
+          <Route path="/tenant/rooms" element={<TenantRoomsPage />} />
+          <Route path="/tenant/availability" element={<TenantAvailabilityPage />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

@@ -5,7 +5,8 @@ import { HeroSection } from '../components/HeroSection';
 import { Footer } from '../../../components/common/Footer';
 import { useProperties } from '../../property/hooks/useProperties';
 import { PropertyList } from '../../property/components/PropertyList';
-import type { PropertyQuery } from '../../../types/property';
+import { useAuth } from '../../auth/stores/AuthContext';
+import type { PropertyQuery, PropertyItem } from '../../../types/property';
 
 const initialQuery: PropertyQuery = {
   city: 'Semua',
@@ -19,7 +20,8 @@ const initialQuery: PropertyQuery = {
 export function LandingPage() {
   const navigate = useNavigate();
   const [query, setState] = useState(initialQuery);
-  const { data, meta, loading } = useProperties(query);
+  const { data, loading } = useProperties(query);
+  const { user } = useAuth();
 
   const setQuery = (next: Partial<PropertyQuery>) => {
     if (next.city || next.checkIn || next.checkOut) {
@@ -35,29 +37,22 @@ export function LandingPage() {
     setState((prev) => ({ ...prev, ...next }));
   };
 
+  const handlePropertyClick = (item: PropertyItem) => {
+    if (!user) {
+      alert('Silakan login terlebih dahulu untuk melakukan booking');
+      navigate('/login/user');
+      return;
+    }
+    // Navigate to property detail page where user can select a room and book
+    navigate(`/properties/${item.id}`);
+  };
+
   return (
     <div className="layout">
       <Navbar query={query} setQuery={setQuery} />
       <main className="page-main">
         <HeroSection />
-        <section className="listing-section">
-          <div className="listing-heading">
-            <div>
-              <h2>Jelajahi Properti</h2>
-              <p>Temukan tempat menginap terbaik di seluruh Indonesia</p>
-            </div>
-            {!loading && meta.total > 0 && (
-              <span className="listing-count">{meta.total} properti tersedia</span>
-            )}
-          </div>
-          <PropertyList
-            loading={loading}
-            items={data}
-            page={meta.page}
-            totalPages={meta.totalPages}
-            onPageChange={(page) => setQuery({ page })}
-          />
-        </section>
+        <PropertyList loading={loading} items={data} onPropertyClick={handlePropertyClick} />
       </main>
       <Footer />
     </div>
