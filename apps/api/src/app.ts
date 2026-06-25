@@ -13,6 +13,7 @@ import { roomRouter } from './routes/room.route.js';
 import { categoryRouter } from './routes/category.route.js';
 import { availabilityRouter } from './routes/availability.route.js';
 import { uploadRouter } from './routes/upload.route.js';
+import reportRouter from './routes/report.route.js';
 
 const app = express();
 const port = Number(process.env.PORT) || 8000;
@@ -36,6 +37,7 @@ app.use('/api', roomRouter);
 app.use('/api', categoryRouter);
 app.use('/api', availabilityRouter);
 app.use('/api', uploadRouter);
+app.use('/api', reportRouter);
 
 app.listen(port, () => {
   process.stdout.write(`API ready bossku at http://localhost:${port}\n`);

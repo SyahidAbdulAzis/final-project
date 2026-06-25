@@ -1,11 +1,10 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getPropertyDetail } from '../services/propertyApi.js';
 import { Navbar } from '../../../components/common/Navbar.js';
 import { Footer } from '../../../components/common/Footer.js';
 import { useAuth } from '../../auth/stores/AuthContext.js';
 import { PriceCalendar } from '../components/PriceCalendar.js';
-import { Dropdown } from '../../../components/common/Dropdown.js';
 
 interface Room {
   id: string;
@@ -147,22 +146,8 @@ export function PropertyDetailPage() {
       alert('Silakan pilih tanggal check-in dan check-out');
       return;
     }
-    if (checkIn < today || checkOut < today) {
-      alert('Tanggal check-in dan check-out tidak boleh di masa lalu.');
-      return;
-    }
-    if (!isRangeAvailable(selectedRoomObj, checkIn, checkOut)) {
-      alert('Kamar tidak tersedia pada rentang tanggal yang dipilih. Silakan pilih tanggal lain.');
-      return;
-    }
-    if (selectedRoomObj && guestCount > selectedRoomObj.maxGuests) {
-      alert(`Kamar ini maksimal untuk ${selectedRoomObj.maxGuests} tamu.`);
-      return;
-    }
-    navigate(`/booking/${selectedRoom}?checkIn=${checkIn}&checkOut=${checkOut}&guests=${guestCount}`);
+    navigate(`/booking/${selectedRoom}?checkIn=${checkIn}&checkOut=${checkOut}`);
   };
-
-  const maxGuests = property.rooms.reduce((m, r) => Math.max(m, r.maxGuests), 0);
 
   return (
     <div className="layout">
@@ -413,6 +398,24 @@ export function PropertyDetailPage() {
                   <span className="pd-booking-host-label">Tuan Rumah</span>
                   <span className="pd-booking-host-name">{property.tenant.fullName}</span>
                 </div>
+                <button
+                  onClick={handleCheckout}
+                  disabled={!checkIn || !checkOut || totalPrice === 0}
+                  style={{
+                    width: '100%',
+                    padding: 14,
+                    borderRadius: 12,
+                    border: 'none',
+                    background: !checkIn || !checkOut || totalPrice === 0 ? 'var(--muted)' : 'var(--primary)',
+                    color: '#fff',
+                    fontSize: '1rem',
+                    fontWeight: 600,
+                    cursor: !checkIn || !checkOut || totalPrice === 0 ? 'not-allowed' : 'pointer',
+                    transition: 'all 0.2s',
+                  }}
+                >
+                  Checkout
+                </button>
               </div>
             </div>
           </div>

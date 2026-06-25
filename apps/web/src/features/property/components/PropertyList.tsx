@@ -5,9 +5,7 @@ import { formatRupiah } from '../../../lib/utils';
 type Props = {
   loading: boolean;
   items: PropertyItem[];
-  page?: number;
-  totalPages?: number;
-  onPageChange?: (page: number) => void;
+  onPropertyClick?: (item: PropertyItem) => void;
 };
 
 function Card({ item }: { item: PropertyItem }) {
@@ -47,7 +45,13 @@ function Card({ item }: { item: PropertyItem }) {
   );
 }
 
-function Skeleton() {
+
+function Availability({ item }: { item: PropertyItem }) {
+  return <p className={item.available ? 'chip chip-open' : 'chip chip-closed'}>{item.available ? 'Bisa dipesan' : 'Penuh'}</p>;
+}
+
+function Card({ item, onClick }: { item: PropertyItem; onClick?: () => void }) {
+  const isGuestChoice = item.rating && item.rating >= 4.8;
   return (
     <div className="property-grid">
       {Array.from({ length: 4 }).map((_, i) => (
@@ -64,52 +68,27 @@ function Skeleton() {
   );
 }
 
-function Pagination({ page, totalPages, onPageChange }: { page: number; totalPages: number; onPageChange: (page: number) => void }) {
-  const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
+function Content({ loading, items, onPropertyClick }: Pick<Props, 'loading' | 'items' | 'onPropertyClick'>) {
+  if (loading) return null;
+  const displayItems = items.length ? items : dummyCards;
+  const isDummy = !items.length;
   return (
-    <div className="pagination">
-      <button className="pagination-btn" disabled={page <= 1} onClick={() => onPageChange(page - 1)}>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6" /></svg>
-        Sebelumnya
-      </button>
-      <div className="pagination-pages">
-        {pages.map((p) => (
-          <button
-            key={p}
-            className={`pagination-page${p === page ? ' pagination-page--active' : ''}`}
-            onClick={() => onPageChange(p)}
-          >
-            {p}
-          </button>
-        ))}
-      </div>
-      <button className="pagination-btn" disabled={page >= totalPages} onClick={() => onPageChange(page + 1)}>
-        Berikutnya
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6" /></svg>
-      </button>
+    <div className="property-grid">
+      {displayItems.map((item) => (
+        <Card 
+          key={item.id} 
+          item={item} 
+          onClick={isDummy ? undefined : () => onPropertyClick?.(item)} 
+        />
+      ))}
     </div>
   );
 }
 
 export function PropertyList({ loading, items, page = 1, totalPages = 1, onPageChange }: Props) {
   return (
-    <div className="property-list">
-      {loading && <Skeleton />}
-      {!loading && items.length === 0 && (
-        <p className="empty-state">Belum ada properti yang tersedia.</p>
-      )}
-      {!loading && items.length > 0 && (
-        <>
-          <div className="property-grid">
-            {items.map((item) => (
-              <Card key={item.id} item={item} />
-            ))}
-          </div>
-          {totalPages > 1 && (
-            <Pagination page={page} totalPages={totalPages} onPageChange={onPageChange || (() => {})} />
-          )}
-        </>
-      )}
-    </div>
+    <section id="properti" className="listing-section">
+      <Content loading={props.loading} items={props.items} onPropertyClick={props.onPropertyClick} />
+    </section>
   );
 }
