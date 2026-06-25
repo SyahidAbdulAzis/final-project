@@ -370,11 +370,12 @@ export async function submitManualPayment(bookingId: string, data: ManualPayment
     },
   });
 
-  // Update booking status to MENUNGGU_KONFIRMASI
+  // Update booking status to MENUNGGU_KONFIRMASI with 2-day expiry for tenant confirmation
   const updatedBooking = await prisma.booking.update({
     where: { id: bookingId },
     data: {
       status: 'MENUNGGU_KONFIRMASI',
+      expiresAt: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
     },
     include: {
       user: {
@@ -397,7 +398,26 @@ export async function submitManualPayment(bookingId: string, data: ManualPayment
   return updatedBooking;
 }
 
+const CONFIRMATION_EXPIRY_MS = 2 * 24 * 60 * 60 * 1000; // 2 days
+
+export async function expirePendingConfirmations() {
+  await prisma.booking.updateMany({
+    where: {
+      status: 'MENUNGGU_KONFIRMASI',
+      expiresAt: {
+        lt: new Date(),
+      },
+    },
+    data: {
+      status: 'KADALUARSA',
+    },
+  });
+}
+
 export async function getBookingsByTenantId(tenantId: string, page: number = 1, limit: number = 5) {
+  // Expire any bookings past the 2-day confirmation window
+  await expirePendingConfirmations();
+
   // Get all properties owned by the tenant
   const properties = await prisma.property.findMany({
     where: { tenantId },
@@ -485,6 +505,15 @@ export async function confirmPayment(bookingId: string, tenantId: string) {
     throw new Error('Booking tidak dapat dikonfirmasi karena status tidak valid');
   }
 
+  // Check if booking has expired
+  if (booking.expiresAt && booking.expiresAt < new Date()) {
+    await prisma.booking.update({
+      where: { id: bookingId },
+      data: { status: 'KADALUARSA' },
+    });
+    throw new Error('Waktu konfirmasi telah habis (2 hari). Booking telah kadaluarsa.');
+  }
+
   // Update booking status to DIKONFIRMASI
   const updatedBooking = await prisma.booking.update({
     where: { id: bookingId },
@@ -546,6 +575,15 @@ export async function rejectPayment(bookingId: string, tenantId: string) {
   // Check if booking is in MENUNGGU_KONFIRMASI status
   if (booking.status !== 'MENUNGGU_KONFIRMASI') {
     throw new Error('Booking tidak dapat ditolak karena status tidak valid');
+  }
+
+  // Check if booking has expired
+  if (booking.expiresAt && booking.expiresAt < new Date()) {
+    await prisma.booking.update({
+      where: { id: bookingId },
+      data: { status: 'KADALUARSA' },
+    });
+    throw new Error('Waktu konfirmasi telah habis (2 hari). Booking telah kadaluarsa.');
   }
 
   // Update booking status to CANCEL

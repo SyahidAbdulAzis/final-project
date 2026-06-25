@@ -8,19 +8,22 @@ import {
   getSalesReportByProperty,
   getSalesReportByUser,
   getSalesReportByTransaction,
+  getSalesChartData,
   type SalesReportByProperty,
   type SalesReportByUser,
   type SalesReportByTransaction,
+  type SalesChartItem,
 } from '../services/reportApi';
+import { DonutChart } from '../components/DonutChart';
 
-type ReportType = 'property' | 'user' | 'transaction';
+type ReportType = 'property' | 'user' | 'transaction' | 'chart';
 type SortBy = 'date' | 'totalSales';
 
 export function ReportPage() {
   const navigate = useNavigate();
   const { user, isAuthenticated, isLoading } = useAuth();
   
-  const [reportType, setReportType] = useState<ReportType>('property');
+  const [reportType, setReportType] = useState<ReportType>('chart');
   const [sortBy, setSortBy] = useState<SortBy>('date');
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
@@ -28,6 +31,7 @@ export function ReportPage() {
   const [propertyReport, setPropertyReport] = useState<SalesReportByProperty[]>([]);
   const [userReport, setUserReport] = useState<SalesReportByUser[]>([]);
   const [transactionReport, setTransactionReport] = useState<SalesReportByTransaction[]>([]);
+  const [chartReport, setChartReport] = useState<SalesChartItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -61,6 +65,9 @@ export function ReportPage() {
       } else if (reportType === 'transaction') {
         const data = await getSalesReportByTransaction(user.id, startDate || undefined, endDate || undefined, sortBy);
         setTransactionReport(data);
+      } else if (reportType === 'chart') {
+        const data = await getSalesChartData(user.id, startDate || undefined, endDate || undefined);
+        setChartReport(data);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Gagal memuat laporan');
@@ -102,7 +109,7 @@ export function ReportPage() {
             Report Penjualan
           </h1>
           <p style={{ color: 'var(--muted)', fontSize: '0.9rem' }}>
-            Analisis penjualan berdasarkan properti, user, dan transaksi
+            Analisis penjualan 
           </p>
         </div>
 
@@ -114,7 +121,7 @@ export function ReportPage() {
 
         {/* Report Type Selection */}
         <div style={{ marginBottom: 24, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          {(['property', 'user', 'transaction'] as ReportType[]).map((type) => (
+          {(['chart', 'property', 'user', 'transaction'] as ReportType[]).map((type) => (
             <button
               key={type}
               onClick={() => setReportType(type)}
@@ -130,7 +137,7 @@ export function ReportPage() {
                 transition: 'all 0.2s',
               }}
             >
-              {type === 'property' ? 'Berdasarkan Properti' : type === 'user' ? 'Berdasarkan User' : 'Berdasarkan Transaksi'}
+              {type === 'property' ? 'Berdasarkan Properti' : type === 'user' ? 'Berdasarkan User' : type === 'transaction' ? 'Berdasarkan Transaksi' : 'Grafik Penjualan'}
             </button>
           ))}
         </div>
@@ -235,6 +242,11 @@ export function ReportPage() {
             <p style={{ fontSize: '1.1rem', marginBottom: 8 }}>Tidak ada data penjualan</p>
             <p style={{ fontSize: '0.9rem' }}>Belum ada transaksi yang berhasil dari user</p>
           </div>
+        ) : reportType === 'chart' && chartReport.length === 0 ? (
+          <div style={{ padding: 48, borderRadius: 16, backgroundColor: '#f5f5f5', textAlign: 'center', color: 'var(--muted)' }}>
+            <p style={{ fontSize: '1.1rem', marginBottom: 8 }}>Tidak ada data grafik</p>
+            <p style={{ fontSize: '0.9rem' }}>Belum ada transaksi yang berhasil</p>
+          </div>
         ) : reportType === 'transaction' && transactionReport.length === 0 ? (
           <div style={{ padding: 48, borderRadius: 16, backgroundColor: '#f5f5f5', textAlign: 'center', color: 'var(--muted)' }}>
             <p style={{ fontSize: '1.1rem', marginBottom: 8 }}>Tidak ada data transaksi</p>
@@ -293,6 +305,11 @@ export function ReportPage() {
                 </div>
               </div>
             ))}
+            {reportType === 'chart' && (
+              <div style={{ border: '1px solid var(--line)', borderRadius: 16, padding: 32, backgroundColor: '#fff' }}>
+                <DonutChart data={chartReport} formatCurrency={formatCurrency} />
+              </div>
+            )}
             {reportType === 'transaction' && (
               <div style={{ border: '1px solid var(--line)', borderRadius: 16, backgroundColor: '#fff', overflow: 'hidden' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>

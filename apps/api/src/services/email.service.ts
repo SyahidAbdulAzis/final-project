@@ -118,6 +118,58 @@ export async function sendPaymentRejectionEmail(
   await sendEmail({ to: userEmail, subject, html });
 }
 
+import prisma from '../lib/prisma.js';
+
+export async function sendCheckInReminders(): Promise<number> {
+  const now = new Date();
+  const in24Hours = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+
+  const bookings = await prisma.booking.findMany({
+    where: {
+      status: 'DIKONFIRMASI',
+      reminderSentAt: null,
+      checkIn: {
+        gte: now,
+        lte: in24Hours,
+      },
+    },
+    include: {
+      user: {
+        select: { email: true, fullName: true },
+      },
+      room: {
+        include: {
+          property: { select: { name: true, address: true } },
+        },
+      },
+    },
+  });
+
+  let sentCount = 0;
+  for (const booking of bookings) {
+    try {
+      await sendCheckInReminderEmail(
+        booking.user.email,
+        booking.user.fullName,
+        booking,
+      );
+      await prisma.booking.update({
+        where: { id: booking.id },
+        data: { reminderSentAt: new Date() },
+      });
+      sentCount++;
+    } catch (error) {
+      console.error(`Failed to send reminder for booking ${booking.id}:`, error);
+    }
+  }
+
+  if (sentCount > 0) {
+    console.log(`Check-in reminders sent: ${sentCount} booking(s)`);
+  }
+
+  return sentCount;
+}
+
 export async function sendCheckInReminderEmail(
   userEmail: string,
   userName: string,

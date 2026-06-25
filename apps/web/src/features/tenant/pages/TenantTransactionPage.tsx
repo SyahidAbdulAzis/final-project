@@ -1,10 +1,60 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Navbar } from '../../../components/common/Navbar';
 import { Footer } from '../../../components/common/Footer';
 import { getTenantBookings, confirmPayment, rejectPayment, tenantCancelBooking } from '../../booking/services/bookingApi';
 import { useAuth } from '../../auth/stores/AuthContext';
 import type { BookingResponse } from '../../../types/booking';
+
+function CountdownTimer({ expiresAt, onExpired }: { expiresAt: string; onExpired: () => void }) {
+  const [timeLeft, setTimeLeft] = useState(0);
+
+  useEffect(() => {
+    const target = new Date(expiresAt).getTime();
+
+    const tick = () => {
+      const now = Date.now();
+      const diff = target - now;
+      if (diff <= 0) {
+        setTimeLeft(0);
+        onExpired();
+        return;
+      }
+      setTimeLeft(diff);
+    };
+
+    tick();
+    const interval = setInterval(tick, 1000);
+    return () => clearInterval(interval);
+  }, [expiresAt, onExpired]);
+
+  if (timeLeft <= 0) return null;
+
+  const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+  const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+
+  const isUrgent = timeLeft < 1000 * 60 * 60 * 24; // less than 1 day
+
+  return (
+    <div style={{
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: 4,
+      padding: '4px 10px',
+      borderRadius: 6,
+      fontSize: '0.85rem',
+      fontWeight: 600,
+      backgroundColor: isUrgent ? '#fff0f0' : '#f0f7ff',
+      color: isUrgent ? '#e53935' : '#1976d2',
+    }}>
+      <span>Sisa waktu: </span>
+      {days > 0 && <span>{days}h </span>}
+      <span>{String(hours).padStart(2, '0')}:{String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}</span>
+    </div>
+  );
+}
 
 export function TenantTransactionPage() {
   const navigate = useNavigate();
@@ -20,6 +70,11 @@ export function TenantTransactionPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
+  const [refreshCount, setRefreshCount] = useState(0);
+
+  const handleExpired = useCallback(() => {
+    setRefreshCount((c) => c + 1);
+  }, []);
 
   useEffect(() => {
     if (isLoading) return;
@@ -47,7 +102,7 @@ export function TenantTransactionPage() {
         setError(err instanceof Error ? err.message : 'Gagal memuat transaksi');
         setLoading(false);
       });
-  }, [isAuthenticated, user, navigate, isLoading, currentPage]);
+  }, [isAuthenticated, user, navigate, isLoading, currentPage, refreshCount]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -274,17 +329,22 @@ export function TenantTransactionPage() {
                       Penyewa: {booking.user?.fullName || booking.user?.email || 'Unknown User'}
                     </p>
                   </div>
-                  <div
-                    style={{
-                      padding: '6px 12px',
-                      borderRadius: 20,
-                      backgroundColor: `${getStatusColor(booking.status)}20`,
-                      color: getStatusColor(booking.status),
-                      fontSize: '0.85rem',
-                      fontWeight: 600,
-                    }}
-                  >
-                    {getStatusLabel(booking.status)}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <div
+                      style={{
+                        padding: '6px 12px',
+                        borderRadius: 20,
+                        backgroundColor: `${getStatusColor(booking.status)}20`,
+                        color: getStatusColor(booking.status),
+                        fontSize: '0.85rem',
+                        fontWeight: 600,
+                      }}
+                    >
+                      {getStatusLabel(booking.status)}
+                    </div>
+                    {booking.status === 'MENUNGGU_KONFIRMASI' && booking.expiresAt && (
+                      <CountdownTimer expiresAt={booking.expiresAt} onExpired={handleExpired} />
+                    )}
                   </div>
                 </div>
 
