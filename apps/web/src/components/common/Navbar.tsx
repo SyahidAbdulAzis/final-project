@@ -95,7 +95,7 @@ function UserActions() {
   return (
     <div className="nav-actions">
       {user?.role === 'user' && (
-        <Link to="/register/tenant" className="host-link">Menjadi Tuan Rumah</Link>
+        <a href="/register/tenant" className="host-link">Menjadi Tuan Rumah</a>
       )}
       <div className="account-dropdown">
         <button

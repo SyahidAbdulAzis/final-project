@@ -1,16 +1,26 @@
 import { useState, useEffect } from 'react';
 import { TenantLayout } from '../components/TenantLayout.js';
 import { getCategories, createCategory, updateCategory, deleteCategory } from '../../services/propertyApi.js';
+import { TenantPagination } from '../../../../components/common/TenantPagination.js';
+
+const PAGE_SIZE = 10;
+const EMPTY_META = { page: 1, take: PAGE_SIZE, total: 0, totalPages: 1 };
 
 export function TenantCategoriesPage() {
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
+  const [meta, setMeta] = useState(EMPTY_META);
+  const [page, setPage] = useState(1);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [name, setName] = useState('');
 
-  const load = () => getCategories().then(setCategories).catch(() => {});
+  const load = (p = page) => {
+    getCategories(p, PAGE_SIZE)
+      .then((res) => { setCategories(res?.data ?? []); setMeta(res?.meta ?? EMPTY_META); })
+      .catch(() => {});
+  };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(page); }, [page]);
 
   const reset = () => { setName(''); setEditingId(null); setShowForm(false); };
 
@@ -19,7 +29,7 @@ export function TenantCategoriesPage() {
     try {
       if (editingId) await updateCategory(editingId, name);
       else await createCategory(name);
-      reset(); load();
+      reset(); load(1); setPage(1);
     } catch { alert('Gagal menyimpan kategori'); }
   };
 
@@ -27,7 +37,7 @@ export function TenantCategoriesPage() {
 
   const handleDelete = async (id: string) => {
     if (!confirm('Yakin ingin menghapus kategori ini?')) return;
-    try { await deleteCategory(id); load(); } catch { alert('Gagal menghapus kategori'); }
+    try { await deleteCategory(id); load(page); } catch { alert('Gagal menghapus kategori'); }
   };
 
   return (
@@ -73,6 +83,7 @@ export function TenantCategoriesPage() {
               ))}
             </tbody>
           </table>
+          <TenantPagination page={meta.page} totalPages={meta.totalPages} onPageChange={setPage} />
         </div>
       </div>
     </TenantLayout>

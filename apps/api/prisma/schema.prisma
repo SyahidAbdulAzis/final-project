@@ -23,6 +23,7 @@ enum BookingStatus {
   DIKONFIRMASI
   DIBATALKAN
   KADALUARSA
+  CANCEL
 }
 
 enum AdjustmentType {

@@ -18,5 +18,10 @@ export const bookingIdSchema = z.object({
   id: z.string(),
 });
 
+export const manualPaymentSchema = z.object({
+  proofUrl: z.string().url(),
+});
+
 export type CreateBookingInput = z.infer<typeof createBookingSchema>;
 export type UpdateBookingInput = z.infer<typeof updateBookingSchema>;
+export type ManualPaymentInput = z.infer<typeof manualPaymentSchema>;

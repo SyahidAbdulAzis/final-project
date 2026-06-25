@@ -8,7 +8,7 @@ export type PropertyQuery = {
 };
 
 export type PropertyItem = {
-  id: number;
+  id: string;
   name: string;
   city: string;
   category: string;
