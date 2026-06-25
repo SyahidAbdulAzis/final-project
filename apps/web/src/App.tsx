@@ -1,6 +1,7 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { LandingPage } from './features/landing/pages/LandingPage';
 import { AuthProvider } from './features/auth/stores/AuthContext.js';
+import { ProtectedRoute } from './features/auth/components/ProtectedRoute.js';
 import {
   LoginPage,
   RegisterPage,
@@ -47,7 +48,7 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/forgot-password/:role" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
-          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
 
           {/* Property Management */}
           <Route path="/properties" element={<PropertyCatalogPage />} />
@@ -66,12 +67,12 @@ function App() {
           <Route path="/tenant/reports" element={<ReportPage />} />
           <Route path="/tenant/reports/property" element={<PropertyReportPage />} />
 
-          {/* Tenant Dashboard — TEMP: unprotected for preview */}
-          <Route path="/tenant/dashboard" element={<TenantDashboardPage />} />
-          <Route path="/tenant/properties" element={<TenantPropertiesPage />} />
-          <Route path="/tenant/categories" element={<TenantCategoriesPage />} />
-          <Route path="/tenant/rooms" element={<TenantRoomsPage />} />
-          <Route path="/tenant/availability" element={<TenantAvailabilityPage />} />
+          {/* Tenant Dashboard */}
+          <Route path="/tenant/dashboard" element={<ProtectedRoute role="tenant"><TenantDashboardPage /></ProtectedRoute>} />
+          <Route path="/tenant/properties" element={<ProtectedRoute role="tenant"><TenantPropertiesPage /></ProtectedRoute>} />
+          <Route path="/tenant/categories" element={<ProtectedRoute role="tenant"><TenantCategoriesPage /></ProtectedRoute>} />
+          <Route path="/tenant/rooms" element={<ProtectedRoute role="tenant"><TenantRoomsPage /></ProtectedRoute>} />
+          <Route path="/tenant/availability" element={<ProtectedRoute role="tenant"><TenantAvailabilityPage /></ProtectedRoute>} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

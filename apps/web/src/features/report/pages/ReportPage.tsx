@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Navbar } from '../../../components/common/Navbar';
 import { Footer } from '../../../components/common/Footer';
 import { useAuth } from '../../auth/stores/AuthContext';
+import { Dropdown } from '../../../components/common/Dropdown';
 import {
   getSalesReportByProperty,
   getSalesReportByUser,
@@ -170,24 +171,17 @@ export function ReportPage() {
               }}
             />
           </div>
-          <div style={{ minWidth: 150 }}>
-            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: 8, color: 'var(--text)' }}>
-              Urutkan
-            </label>
-            <select
+          <div style={{ minWidth: 180 }}>
+            <Dropdown
+              label="Urutkan"
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as SortBy)}
-              style={{
-                width: '100%',
-                padding: '10px 12px',
-                borderRadius: 8,
-                border: '1px solid var(--line)',
-                fontSize: '0.9rem',
-              }}
-            >
-              <option value="date">Tanggal</option>
-              <option value="totalSales">Total Penjualan</option>
-            </select>
+              options={[
+                { value: 'date', label: 'Tanggal' },
+                { value: 'totalSales', label: 'Total Penjualan' },
+              ]}
+              onChange={(value) => setSortBy(value as SortBy)}
+              variant="compact"
+            />
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
             <button
