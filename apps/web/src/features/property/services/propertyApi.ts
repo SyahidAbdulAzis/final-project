@@ -21,9 +21,13 @@ export async function getPropertyDetail(id: string) {
   return data;
 }
 
-export async function getCategories() {
-  const { data } = await apiClient.get('/categories');
-  return data;
+export async function getCategories(page?: number, take?: number) {
+  if (page) {
+    const { data } = await apiClient.get('/categories', { params: { page, take: take ?? 10 } });
+    return data; // { data: [], meta: {} }
+  }
+  const { data } = await apiClient.get('/categories', { params: { take: 100 } });
+  return data?.data ?? data; // array (for dropdowns, backward compat)
 }
 
 export async function createCategory(name: string) {
@@ -41,8 +45,8 @@ export async function deleteCategory(id: string) {
   return data;
 }
 
-export async function getTenantProperties() {
-  const { data } = await apiClient.get('/tenant/properties');
+export async function getTenantProperties(page = 1, take = 10) {
+  const { data } = await apiClient.get('/tenant/properties', { params: { page, take } });
   return data;
 }
 

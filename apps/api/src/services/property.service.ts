@@ -136,18 +136,32 @@ export async function getPropertyById(id: string) {
   });
 }
 
-export async function getTenantProperties(tenantId: string) {
-  return await prisma.property.findMany({
-    where: { tenantId },
-    include: { category: true, images: true, rooms: true },
-    orderBy: { createdAt: 'desc' },
-  });
+export async function getTenantProperties(tenantId: string, page = 1, take = 10) {
+  const skip = (page - 1) * take;
+  const [data, total] = await Promise.all([
+    prisma.property.findMany({
+      where: { tenantId },
+      include: { category: true, images: true, rooms: true },
+      orderBy: { createdAt: 'desc' },
+      skip,
+      take,
+    }),
+    prisma.property.count({ where: { tenantId } }),
+  ]);
+  return { data, meta: { page, take, total, totalPages: Math.max(1, Math.ceil(total / take)) } };
 }
 
-export async function updateProperty(id: string, data: Partial<{
-  name: string; city: string; address: string; province: string;
-  latitude: number; longitude: number; description: string; categoryId: string;
-}> & { images?: string[] }) {
+export async function updateProperty(
+  id: string,
+  tenantId: string,
+  data: Partial<{
+    name: string; city: string; address: string; province: string;
+    latitude: number; longitude: number; description: string; categoryId: string;
+  }> & { images?: string[] }
+) {
+  const existing = await prisma.property.findUnique({ where: { id } });
+  if (!existing || existing.tenantId !== tenantId) throw new Error('Properti tidak ditemukan atau bukan milik Anda');
+
   const { images, ...rest } = data;
 
   const updated = await prisma.property.update({
@@ -169,6 +183,8 @@ export async function updateProperty(id: string, data: Partial<{
   });
 }
 
-export async function deleteProperty(id: string) {
+export async function deleteProperty(id: string, tenantId: string) {
+  const existing = await prisma.property.findUnique({ where: { id } });
+  if (!existing || existing.tenantId !== tenantId) throw new Error('Properti tidak ditemukan atau bukan milik Anda');
   return await prisma.property.delete({ where: { id } });
 }

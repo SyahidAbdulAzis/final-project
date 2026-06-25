@@ -1,6 +1,10 @@
 import { useState, useEffect } from 'react';
 import { TenantLayout } from '../components/TenantLayout.js';
 import { getTenantProperties, getRoomsByProperty, createRoom, updateRoom, deleteRoom } from '../../services/propertyApi.js';
+import { TenantPagination } from '../../../../components/common/TenantPagination.js';
+import { Dropdown } from '../../../../components/common/Dropdown.js';
+
+const PAGE_SIZE = 10;
 
 interface RoomForm {
   propertyId: string;
@@ -13,21 +17,47 @@ interface RoomForm {
 export function TenantRoomsPage() {
   const [properties, setProperties] = useState<any[]>([]);
   const [rooms, setRooms] = useState<any[]>([]);
+  const [page, setPage] = useState(1);
   const [selectedProperty, setSelectedProperty] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<RoomForm>({ propertyId: '', name: '', description: '', basePrice: 0, maxGuests: 2 });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const totalPages = Math.max(1, Math.ceil(rooms.length / PAGE_SIZE));
+  const pagedRooms = rooms.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   useEffect(() => {
-    getTenantProperties().then((props) => {
-      setProperties(props);
-      if (props[0]) { setSelectedProperty(props[0].id); }
-    }).catch(() => {});
+    setLoading(true);
+    getTenantProperties()
+      .then((response) => {
+        const props = response.data || [];
+        setProperties(props);
+        if (props[0]) { setSelectedProperty(props[0].id); }
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error('Error loading properties:', err);
+        setError('Gagal memuat properti');
+        setLoading(false);
+      });
   }, []);
 
   useEffect(() => {
     if (!selectedProperty) return;
-    getRoomsByProperty(selectedProperty).then(setRooms).catch(() => {});
+    setPage(1);
+    setLoading(true);
+    getRoomsByProperty(selectedProperty)
+      .then((r) => {
+        setRooms(r);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error('Error loading rooms:', err);
+        setError('Gagal memuat kamar');
+        setLoading(false);
+      });
   }, [selectedProperty]);
 
   const resetForm = () => {
@@ -58,6 +88,40 @@ export function TenantRoomsPage() {
     catch { alert('Gagal menghapus kamar'); }
   };
 
+  if (loading) {
+    return (
+      <TenantLayout>
+        <div style={{ padding: 40, textAlign: 'center' }}>
+          <p>Memuat data...</p>
+        </div>
+      </TenantLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <TenantLayout>
+        <div style={{ padding: 40, textAlign: 'center' }}>
+          <p style={{ color: '#f44336' }}>{error}</p>
+          <button 
+            onClick={() => window.location.reload()}
+            style={{
+              marginTop: 16,
+              padding: '10px 20px',
+              borderRadius: 8,
+              border: '1px solid var(--primary)',
+              background: 'var(--primary)',
+              color: '#fff',
+              cursor: 'pointer'
+            }}
+          >
+            Reload
+          </button>
+        </div>
+      </TenantLayout>
+    );
+  }
+
   return (
     <TenantLayout>
       <div className="tenant-card-header">
@@ -67,11 +131,14 @@ export function TenantRoomsPage() {
         </button>
       </div>
 
-      <div className="tenant-form-group" style={{ maxWidth: 300, marginBottom: 16 }}>
-        <label>Properti</label>
-        <select value={selectedProperty} onChange={(e) => setSelectedProperty(e.target.value)}>
-          {properties.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-        </select>
+      <div style={{ maxWidth: 300, marginBottom: 16 }}>
+        <Dropdown
+          label="Properti"
+          value={selectedProperty}
+          options={properties.map((p) => ({ value: p.id, label: p.name }))}
+          onChange={(value) => setSelectedProperty(value)}
+          variant="pill"
+        />
       </div>
 
       {showForm && (
@@ -113,7 +180,7 @@ export function TenantRoomsPage() {
               </tr>
             </thead>
             <tbody>
-              {rooms.map((r) => (
+              {pagedRooms.map((r) => (
                 <tr key={r.id}>
                   <td>{r.name}</td>
                   <td>Rp {r.basePrice.toLocaleString('id-ID')}</td>
@@ -126,6 +193,7 @@ export function TenantRoomsPage() {
               ))}
             </tbody>
           </table>
+          <TenantPagination page={page} totalPages={totalPages} onPageChange={setPage} />
         </div>
       </div>
     </TenantLayout>

@@ -19,10 +19,12 @@ export async function createCategoryHandler(req: Request, res: Response) {
   }
 }
 
-export async function getAllCategoriesHandler(_req: Request, res: Response) {
+export async function getAllCategoriesHandler(req: Request, res: Response) {
   try {
-    const categories = await getAllCategories();
-    return res.json(categories);
+    const page = Math.max(1, Number(req.query.page) || 1);
+    const take = Math.max(1, Math.min(100, Number(req.query.take) || 10));
+    const result = await getAllCategories(page, take);
+    return res.json(result);
   } catch (error) {
     return badRequest(res, (error as Error).message);
   }

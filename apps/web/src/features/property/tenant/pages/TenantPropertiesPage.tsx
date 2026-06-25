@@ -8,6 +8,11 @@ import {
   deleteProperty,
 } from '../../services/propertyApi.js';
 import { uploadImage } from '../../services/uploadApi.js';
+import { TenantPagination } from '../../../../components/common/TenantPagination.js';
+import { Dropdown } from '../../../../components/common/Dropdown.js';
+
+const PAGE_SIZE = 10;
+const EMPTY_META = { page: 1, take: PAGE_SIZE, total: 0, totalPages: 1 };
 
 interface PropertyForm {
   name: string;
@@ -20,7 +25,9 @@ interface PropertyForm {
 
 export function TenantPropertiesPage() {
   const [properties, setProperties] = useState<any[]>([]);
+  const [meta, setMeta] = useState(EMPTY_META);
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
+  const [page, setPage] = useState(1);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<PropertyForm>({
@@ -33,9 +40,13 @@ export function TenantPropertiesPage() {
     getCategories().then(setCategories).catch(() => {});
   }, []);
 
-  const loadData = () => {
-    getTenantProperties().then(setProperties).catch(() => {});
+  const loadData = (p = page) => {
+    getTenantProperties(p, PAGE_SIZE)
+      .then((res) => { setProperties(res?.data ?? []); setMeta(res?.meta ?? EMPTY_META); })
+      .catch(() => {});
   };
+
+  useEffect(() => { loadData(page); }, [page]);
 
   const resetForm = () => {
     setForm({ name: '', city: '', address: '', description: '', categoryId: '', images: [] });
@@ -68,7 +79,8 @@ export function TenantPropertiesPage() {
         await createProperty(form);
       }
       resetForm();
-      loadData();
+      loadData(1);
+      setPage(1);
     } catch (err: any) {
       const msg = err?.response?.data?.message || err?.message || 'Gagal menyimpan properti';
       alert(msg);
@@ -92,7 +104,7 @@ export function TenantPropertiesPage() {
     if (!confirm('Yakin ingin menghapus properti ini?')) return;
     try {
       await deleteProperty(id);
-      loadData();
+      loadData(page);
     } catch {
       alert('Gagal menghapus properti');
     }
@@ -124,10 +136,15 @@ export function TenantPropertiesPage() {
             </div>
             <div className="tenant-form-group">
               <label>Kategori</label>
-              <select value={form.categoryId} onChange={(e) => setForm((f) => ({ ...f, categoryId: e.target.value }))} required>
-                <option value="">Pilih kategori</option>
-                {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </select>
+              <Dropdown
+                value={form.categoryId}
+                options={[
+                  { value: '', label: 'Pilih kategori' },
+                  ...categories.map((c) => ({ value: c.id, label: c.name })),
+                ]}
+                onChange={(value) => setForm((f) => ({ ...f, categoryId: value }))}
+                variant="pill"
+              />
             </div>
             <div className="tenant-form-group full">
               <label>Deskripsi</label>
@@ -184,6 +201,7 @@ export function TenantPropertiesPage() {
               ))}
             </tbody>
           </table>
+          <TenantPagination page={meta.page} totalPages={meta.totalPages} onPageChange={setPage} />
         </div>
       </div>
     </TenantLayout>
