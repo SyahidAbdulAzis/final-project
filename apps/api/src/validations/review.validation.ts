@@ -6,3 +6,9 @@ export const createReviewSchema = z.object({
 });
 
 export type CreateReviewInput = z.infer<typeof createReviewSchema>;
+
+export const replyReviewSchema = z.object({
+  reply: z.string().min(1, 'Balasan wajib diisi'),
+});
+
+export type ReplyReviewInput = z.infer<typeof replyReviewSchema>;

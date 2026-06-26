@@ -73,6 +73,7 @@ function App() {
           <Route path="/tenant/categories" element={<ProtectedRoute role="tenant"><TenantCategoriesPage /></ProtectedRoute>} />
           <Route path="/tenant/rooms" element={<ProtectedRoute role="tenant"><TenantRoomsPage /></ProtectedRoute>} />
           <Route path="/tenant/availability" element={<ProtectedRoute role="tenant"><TenantAvailabilityPage /></ProtectedRoute>} />
+          <Route path="/tenant/reviews" element={<ProtectedRoute role="tenant"><TenantReviewsPage /></ProtectedRoute>} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

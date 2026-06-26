@@ -178,6 +178,10 @@ function UserActions() {
                   <MenuIcon path="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />
                   Ketersediaan
                 </Link>
+                <Link to="/tenant/reviews" className="account-item" onClick={close}>
+                  <MenuIcon path="M8 12h.01M3 12h.01M3 18h.01" />
+                  Ulasan
+                </Link>
                 <div className="account-divider" />
                 <p className="menu-section-label">Bisnis</p>
                 <Link to="/tenant/transactions" className="account-item" onClick={close}>
