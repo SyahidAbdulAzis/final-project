@@ -25,6 +25,7 @@ import {
   TenantCategoriesPage,
   TenantRoomsPage,
   TenantAvailabilityPage,
+  TenantReviewsPage,
 } from './features/property/tenant/pages/index.js';
 
 function App() {
@@ -72,6 +73,7 @@ function App() {
           <Route path="/tenant/categories" element={<TenantCategoriesPage />} />
           <Route path="/tenant/rooms" element={<TenantRoomsPage />} />
           <Route path="/tenant/availability" element={<TenantAvailabilityPage />} />
+          <Route path="/tenant/reviews" element={<TenantReviewsPage />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

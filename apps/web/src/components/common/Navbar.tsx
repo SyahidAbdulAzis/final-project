@@ -94,11 +94,13 @@ function UserActions() {
               <>
                 <a href="/tenant/dashboard" className="account-item">Dashboard</a>
                 <a href="/tenant/properties" className="account-item">Properti Saya</a>
+                <a href="/tenant/reviews" className="account-item">Ulasan</a>
                 <a href="/tenant/categories" className="account-item">Kategori</a>
                 <a href="/tenant/rooms" className="account-item">Kamar</a>
                 <a href="/tenant/availability" className="account-item">Ketersediaan</a>
                 <a href="/tenant/transactions" className="account-item">Manajemen Transaksi</a>
                 <a href="/tenant/reports" className="account-item">Report Penjualan</a>
+                <a href="/tenant/reviews" className="account-item">Ulasan</a>
               </>
             )}
             <a href="/" className="account-item" onClick={(e) => { e.preventDefault(); logout(); }}>Keluar</a>

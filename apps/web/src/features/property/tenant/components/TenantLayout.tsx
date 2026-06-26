@@ -9,6 +9,7 @@ const navItems = [
   { path: '/tenant/categories', label: 'Kategori', icon: '🏷️' },
   { path: '/tenant/rooms', label: 'Kamar', icon: '🛏️' },
   { path: '/tenant/availability', label: 'Ketersediaan', icon: '📅' },
+  { path: '/tenant/reviews', label: 'Ulasan', icon: '⭐' },
 ];
 
 export function TenantLayout({ children }: { children: React.ReactNode }) {

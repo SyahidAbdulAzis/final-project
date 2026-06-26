@@ -16,6 +16,16 @@ interface Room {
   seasonalRates: { name: string; startDate: string; endDate: string; adjustmentType: string; adjustmentValue: number }[];
 }
 
+interface ReviewItem {
+  id: string;
+  rating: number;
+  comment: string;
+  tenantReply: string | null;
+  repliedAt: string | null;
+  createdAt: string;
+  user: { id: string; fullName: string; photoUrl: string };
+}
+
 interface PropertyDetail {
   id: string;
   name: string;
@@ -26,6 +36,7 @@ interface PropertyDetail {
   images: { url: string }[];
   rooms: Room[];
   tenant: { fullName: string };
+  reviews: ReviewItem[];
 }
 
 export function PropertyDetailPage() {
@@ -173,6 +184,59 @@ export function PropertyDetailPage() {
                 ))}
               </div>
             </div>
+
+            {property.reviews && property.reviews.length > 0 && (
+              <div className="property-detail-section">
+                <h2>Ulasan & Rating</h2>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+                  <div style={{ fontSize: '1.5rem', fontWeight: 700 }}>
+                    {(property.reviews.reduce((sum, r) => sum + r.rating, 0) / property.reviews.length).toFixed(1)}
+                  </div>
+                  <div style={{ color: '#f5a623', fontSize: '1rem' }}>
+                    {'★'.repeat(Math.round(property.reviews.reduce((sum, r) => sum + r.rating, 0) / property.reviews.length))}
+                    {'☆'.repeat(5 - Math.round(property.reviews.reduce((sum, r) => sum + r.rating, 0) / property.reviews.length))}
+                  </div>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>
+                    ({property.reviews.length} ulasan)
+                  </div>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  {property.reviews.map((review) => (
+                    <div key={review.id} style={{
+                      border: '1px solid var(--border)',
+                      borderRadius: 12,
+                      padding: 16,
+                    }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                        <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{review.user.fullName}</div>
+                        <div style={{ color: '#f5a623', fontSize: '0.85rem' }}>
+                          {'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}
+                        </div>
+                      </div>
+                      <p style={{ fontSize: '0.85rem', lineHeight: 1.5, color: 'var(--text)' }}>
+                        {review.comment}
+                      </p>
+                      {review.tenantReply && (
+                        <div style={{
+                          marginTop: 10,
+                          background: '#f0fdf4',
+                          border: '1px solid #bbf7d0',
+                          borderRadius: 8,
+                          padding: '10px 14px',
+                        }}>
+                          <div style={{ fontSize: '0.78rem', fontWeight: 600, color: '#166534', marginBottom: 4 }}>
+                            Balasan Tuan Rumah:
+                          </div>
+                          <p style={{ fontSize: '0.85rem', color: '#166534', lineHeight: 1.4 }}>
+                            {review.tenantReply}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {selectedRoomObj && (
               <div className="calendar-section">
