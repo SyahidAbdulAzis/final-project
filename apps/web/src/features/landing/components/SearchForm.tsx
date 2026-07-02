@@ -3,11 +3,26 @@ import DatePicker from 'react-datepicker';
 import { format } from 'date-fns';
 import 'react-datepicker/dist/react-datepicker.css';
 import type { PropertyQuery } from '../../../types/property';
+
 type Props = { query: PropertyQuery; setQuery: (next: Partial<PropertyQuery>) => void };
 type SearchDraft = Pick<PropertyQuery, 'city' | 'checkIn' | 'checkOut'> & { guests: string };
 type FieldProps = { draft: SearchDraft; setDraft: (next: Partial<SearchDraft>) => void };
-const destinations = [{ value: 'Semua', title: 'Semua destinasi', subtitle: 'Lihat semua kota yang tersedia' }, { value: 'Bandung', title: 'Bandung, Jawa Barat', subtitle: 'Untuk pemandangan seperti Trans Studio Bandung' }, { value: 'Yogyakarta', title: 'Yogyakarta, Yogyakarta', subtitle: 'Karena arsitekturnya yang menakjubkan' }, { value: 'Jakarta', title: 'Jakarta Selatan, Jakarta', subtitle: 'Di dekat Anda' }, { value: 'Surabaya', title: 'Surabaya, Jawa Timur', subtitle: 'Pilihan kota bisnis yang strategis' }, { value: 'Bali', title: 'Kuta, Bali', subtitle: 'Destinasi pantai populer' }];
-function formatShortDate(value: string) { if (!value) return ''; const [year, month, day] = value.split('-').map(Number); if (!year || !month || !day) return ''; return new Intl.DateTimeFormat('id-ID', { day: '2-digit', month: 'short' }).format(new Date(year, month - 1, day)); }
+
+const destinations = [
+  { value: 'Semua', title: 'Semua destinasi', subtitle: 'Lihat semua kota yang tersedia' },
+  { value: 'Bandung', title: 'Bandung, Jawa Barat', subtitle: 'Untuk pemandangan seperti Trans Studio Bandung' },
+  { value: 'Yogyakarta', title: 'Yogyakarta, Yogyakarta', subtitle: 'Karena arsitekturnya yang menakjubkan' },
+  { value: 'Jakarta', title: 'Jakarta Selatan, Jakarta', subtitle: 'Di dekat Anda' },
+  { value: 'Surabaya', title: 'Surabaya, Jawa Timur', subtitle: 'Pilihan kota bisnis yang strategis' },
+  { value: 'Bali', title: 'Kuta, Bali', subtitle: 'Destinasi pantai populer' },
+];
+
+function formatShortDate(value: string): string {
+  if (!value) return '';
+  const [year, month, day] = value.split('-').map(Number);
+  if (!year || !month || !day) return '';
+  return new Intl.DateTimeFormat('id-ID', { day: '2-digit', month: 'short' }).format(new Date(year, month - 1, day));
+}
 
 function CityField({ draft, setDraft }: FieldProps) {
   const [open, setOpen] = useState(false);
@@ -45,7 +60,8 @@ function DateField({ draft, setDraft }: FieldProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const startDate = draft.checkIn ? new Date(draft.checkIn) : null;
   const endDate = draft.checkOut ? new Date(draft.checkOut) : null;
-  const handleChange = (dates: [Date | null, Date | null]) => {
+  const handleChange = (dates: [Date | null, Date | null] | null) => {
+    if (!dates) return;
     const [s, e] = dates;
     setDraft({ checkIn: s ? format(s, 'yyyy-MM-dd') : '', checkOut: e ? format(e, 'yyyy-MM-dd') : '' });
     if (s && e) setOpen(false);
@@ -66,7 +82,7 @@ function DateField({ draft, setDraft }: FieldProps) {
             selectsRange
             startDate={startDate}
             endDate={endDate}
-            onChange={handleChange as any}
+            onChange={handleChange}
             minDate={new Date()}
             inline
             monthsShown={2}
@@ -85,7 +101,7 @@ function GuestsField({ draft, setDraft }: FieldProps) {
     <label className="field search-pill pill-last" onClick={onPillClick}>
       <span className="pill-title">Jumlah Orang</span>
       <span className="duration-inline">
-        <input ref={inputRef} className="duration-input" min={1} max={16} type="number" value={draft.guests} onBlur={normalizeGuests} onChange={(e) => setDraft({ guests: e.target.value })} />
+        <input ref={inputRef} id="guests" name="guests" className="duration-input" min={1} max={16} type="number" value={draft.guests} onBlur={normalizeGuests} onChange={(e) => setDraft({ guests: e.target.value })} />
         <span className="unit">orang</span>
       </span>
     </label>
