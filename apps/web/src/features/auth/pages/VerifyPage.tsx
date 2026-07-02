@@ -1,16 +1,19 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { verifySchema, type VerifyForm } from '../validations/authSchemas.js';
 import { verifyApi } from '../services/authApi.js';
+import { useAuth } from '../stores/AuthContext.js';
 import { Navbar } from '../../../components/common/Navbar.js';
 import { Footer } from '../../../components/common/Footer.js';
+import { PasswordInput } from '../../../components/common/PasswordInput.js';
 
 export function VerifyPage() {
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token') || '';
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [apiError, setApiError] = useState('');
   const [success, setSuccess] = useState(false);
 
@@ -26,14 +29,25 @@ export function VerifyPage() {
   const onSubmit = async (data: VerifyForm) => {
     setApiError('');
     try {
-      await verifyApi(data.token || token, data.password);
-      setSuccess(true);
-      setTimeout(() => navigate('/login/user'), 2000);
+      const result = await verifyApi(data.token || token, data.password);
+      if (result?.token && result?.user) {
+        const userRole = result.user.role?.toLowerCase() as 'user' | 'tenant';
+        login(result.token, { ...result.user, role: userRole });
+        setSuccess(true);
+        setTimeout(() => navigate(userRole === 'tenant' ? '/tenant/dashboard' : '/'), 1500);
+      } else {
+        setSuccess(true);
+        setTimeout(() => navigate('/login/user'), 2000);
+      }
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
       setApiError(msg || 'Verifikasi gagal. Link mungkin sudah kadaluarsa.');
     }
   };
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   return (
     <div className="layout">
@@ -58,24 +72,22 @@ export function VerifyPage() {
 
             <div className="field-group">
               <label htmlFor="password">Password Baru</label>
-              <input
+              <PasswordInput
                 id="password"
-                type="password"
                 placeholder="Minimal 8 karakter"
+                hasError={!!errors.password}
                 {...register('password')}
-                className={errors.password ? 'input-error' : ''}
               />
               {errors.password && <span className="field-error">{errors.password.message}</span>}
             </div>
 
             <div className="field-group">
               <label htmlFor="confirmPassword">Konfirmasi Password</label>
-              <input
+              <PasswordInput
                 id="confirmPassword"
-                type="password"
                 placeholder="Ulangi password"
+                hasError={!!errors.confirmPassword}
                 {...register('confirmPassword')}
-                className={errors.confirmPassword ? 'input-error' : ''}
               />
               {errors.confirmPassword && (
                 <span className="field-error">{errors.confirmPassword.message}</span>
