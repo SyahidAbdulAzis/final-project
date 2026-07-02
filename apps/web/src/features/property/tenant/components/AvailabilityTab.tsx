@@ -1,24 +1,39 @@
-import { useState } from 'react';
-import { bulkAvailability } from '../../services/propertyApi.js';
+import { useState, useEffect } from 'react';
+import { bulkAvailability, getAvailabilities } from '../../services/propertyApi.js';
 import { TenantPagination } from '../../../../components/common/TenantPagination.js';
+import { showToast } from '../../../../components/common/Toast.js';
 
 const PAGE_SIZE = 10;
+const EMPTY_META = { page: 1, take: PAGE_SIZE, total: 0, totalPages: 1 };
+
+interface Availability {
+  id: string;
+  roomId: string;
+  date: string;
+  isAvailable: boolean;
+}
 
 interface Props {
   selectedRoom: string;
-  availabilities: any[];
-  refresh: () => void;
 }
 
-export function AvailabilityTab({ selectedRoom, availabilities, refresh }: Props) {
+export function AvailabilityTab({ selectedRoom }: Props) {
   const [dateStart, setDateStart] = useState('');
   const [dateEnd, setDateEnd] = useState('');
   const [isAvailable, setIsAvailable] = useState(true);
   const [page, setPage] = useState(1);
+  const [availabilities, setAvailabilities] = useState<Availability[]>([]);
+  const [meta, setMeta] = useState(EMPTY_META);
 
-  const sorted = [...availabilities].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
-  const paged = sorted.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const loadData = (p = page) => {
+    getAvailabilities(selectedRoom, p, PAGE_SIZE)
+      .then((res) => { setAvailabilities(res?.data ?? []); setMeta(res?.meta ?? EMPTY_META); })
+      .catch(() => {});
+  };
+
+  useEffect(() => { setPage(1); }, [selectedRoom]);
+
+  useEffect(() => { if (selectedRoom) loadData(page); }, [selectedRoom, page]);
 
   const handleBulk = async () => {
     if (!dateStart || !dateEnd || !selectedRoom) return;
@@ -30,15 +45,15 @@ export function AvailabilityTab({ selectedRoom, availabilities, refresh }: Props
     }
     try {
       await bulkAvailability({ roomId: selectedRoom, dates, isAvailable });
-      refresh();
-      alert('Ketersediaan berhasil diperbarui');
-    } catch { alert('Gagal memperbarui ketersediaan'); }
+      loadData(page);
+      showToast('Ketersediaan berhasil diperbarui', 'success');
+    } catch { showToast('Gagal memperbarui ketersediaan', 'error'); }
   };
 
   return (
     <div>
       <div className="tenant-form">
-        <h3 style={{ fontSize: '1rem', fontWeight: 600, margin: '0 0 16px' }}>Atur Ketersediaan</h3>
+        <h3 className="tenant-form-header">Atur Ketersediaan</h3>
         <div className="tenant-form-grid">
           <div className="tenant-form-group">
             <label>Dari Tanggal</label>
@@ -49,8 +64,8 @@ export function AvailabilityTab({ selectedRoom, availabilities, refresh }: Props
             <input type="date" value={dateEnd} onChange={(e) => setDateEnd(e.target.value)} />
           </div>
         </div>
-        <div className="tenant-form-group" style={{ marginBottom: 12 }}>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+        <div className="tenant-form-group tenant-form-group--tight">
+          <label className="tenant-checkbox-label">
             <input type="checkbox" checked={isAvailable} onChange={(e) => setIsAvailable(e.target.checked)} />
             <span>Tersedia</span>
           </label>
@@ -58,12 +73,12 @@ export function AvailabilityTab({ selectedRoom, availabilities, refresh }: Props
         <button className="btn-tenant btn-tenant-primary" onClick={handleBulk}>Simpan Ketersediaan</button>
       </div>
 
-      <div className="tenant-card" style={{ padding: 0 }}>
+      <div className="tenant-card tenant-card--flush">
         <div className="tenant-table-wrap">
           <table className="tenant-table">
             <thead><tr><th>Tanggal</th><th>Status</th></tr></thead>
             <tbody>
-              {paged.map((a) => (
+              {availabilities.map((a) => (
                 <tr key={a.id}>
                   <td>{new Date(a.date).toLocaleDateString('id-ID')}</td>
                   <td><span className={`badge ${a.isAvailable ? 'badge-green' : 'badge-red'}`}>{a.isAvailable ? 'Tersedia' : 'Tidak Tersedia'}</span></td>
@@ -71,7 +86,7 @@ export function AvailabilityTab({ selectedRoom, availabilities, refresh }: Props
               ))}
             </tbody>
           </table>
-          <TenantPagination page={page} totalPages={totalPages} onPageChange={setPage} />
+          <TenantPagination page={meta.page} totalPages={meta.totalPages} onPageChange={setPage} />
         </div>
       </div>
     </div>

@@ -10,9 +10,22 @@ import {
 import { uploadImage } from '../../services/uploadApi.js';
 import { TenantPagination } from '../../../../components/common/TenantPagination.js';
 import { Dropdown } from '../../../../components/common/Dropdown.js';
+import { showToast } from '../../../../components/common/Toast.js';
 
 const PAGE_SIZE = 10;
 const EMPTY_META = { page: 1, take: PAGE_SIZE, total: 0, totalPages: 1 };
+
+interface PropertyData {
+  id: string;
+  name: string;
+  city: string;
+  address: string;
+  description: string;
+  categoryId: string;
+  category?: { id: string; name: string };
+  rooms?: { id: string }[];
+  images: { url: string }[];
+}
 
 interface PropertyForm {
   name: string;
@@ -24,7 +37,7 @@ interface PropertyForm {
 }
 
 export function TenantPropertiesPage() {
-  const [properties, setProperties] = useState<any[]>([]);
+  const [properties, setProperties] = useState<PropertyData[]>([]);
   const [meta, setMeta] = useState(EMPTY_META);
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
   const [page, setPage] = useState(1);
@@ -34,16 +47,23 @@ export function TenantPropertiesPage() {
     name: '', city: '', address: '', description: '', categoryId: '', images: [],
   });
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     loadData();
     getCategories().then(setCategories).catch(() => {});
   }, []);
 
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   const loadData = (p = page) => {
+    setLoading(true);
     getTenantProperties(p, PAGE_SIZE)
       .then((res) => { setProperties(res?.data ?? []); setMeta(res?.meta ?? EMPTY_META); })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setLoading(false));
   };
 
   useEffect(() => { loadData(page); }, [page]);
@@ -54,47 +74,61 @@ export function TenantPropertiesPage() {
     setShowForm(false);
   };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 1 * 1024 * 1024) { alert('Ukuran gambar maksimal 1MB.'); return; }
-    setUploadingImage(true);
-    try {
-      const url = await uploadImage(file);
-      setForm((f) => ({ ...f, images: [...f.images, url] }));
-    } catch {
-      alert('Gagal mengupload gambar.');
-    } finally {
-      setUploadingImage(false);
-      e.target.value = '';
-    }
+    if (file.size > 1 * 1024 * 1024) { showToast('Ukuran gambar maksimal 1MB', 'error'); return; }
+    const previewUrl = URL.createObjectURL(file);
+    setForm((f) => ({ ...f, images: [...f.images, previewUrl] }));
+    e.target.value = '';
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      setUploadingImage(true);
+      
+      // Upload images to Cloudinary first
+      const cloudinaryUrls: string[] = [];
+      for (const img of form.images) {
+        if (img.startsWith('blob:')) {
+          // This is a blob URL, need to upload to Cloudinary
+          const file = await fetch(img).then(r => r.blob());
+          const url = await uploadImage(new File([file], 'image.jpg'));
+          cloudinaryUrls.push(url);
+        } else {
+          // Already a Cloudinary URL, keep as is
+          cloudinaryUrls.push(img);
+        }
+      }
+      
+      const formWithCloudinaryUrls = { ...form, images: cloudinaryUrls };
+      
       if (editingId) {
-        await updateProperty(editingId, form);
+        await updateProperty(editingId, formWithCloudinaryUrls);
       } else {
-        await createProperty(form);
+        await createProperty(formWithCloudinaryUrls);
       }
       resetForm();
       loadData(1);
       setPage(1);
-    } catch (err: any) {
-      const msg = err?.response?.data?.message || err?.message || 'Gagal menyimpan properti';
-      alert(msg);
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { message?: string } }; message?: string };
+      const msg = e?.response?.data?.message || e?.message || 'Gagal menyimpan properti';
+      showToast(msg, 'error');
+    } finally {
+      setUploadingImage(false);
     }
   };
 
-  const handleEdit = (p: any) => {
+  const handleEdit = (p: PropertyData) => {
     setForm({
       name: p.name,
       city: p.city,
       address: p.address,
       description: p.description,
       categoryId: p.categoryId,
-      images: p.images.map((img: any) => img.url),
+      images: p.images.map((img) => img.url),
     });
     setEditingId(p.id);
     setShowForm(true);
@@ -105,8 +139,9 @@ export function TenantPropertiesPage() {
     try {
       await deleteProperty(id);
       loadData(page);
+      showToast('Properti berhasil dihapus', 'success');
     } catch {
-      alert('Gagal menghapus properti');
+      showToast('Gagal menghapus properti', 'error');
     }
   };
 
@@ -152,58 +187,74 @@ export function TenantPropertiesPage() {
             </div>
             <div className="tenant-form-group full">
               <label>Foto Properti</label>
-              <label className="btn-tenant btn-tenant-secondary" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'pointer', width: 'fit-content' }}>
+              <label className="btn-tenant btn-tenant-secondary tenant-upload-label">
                 {uploadingImage ? 'Mengupload...' : '+ Upload Gambar'}
                 <input type="file" accept=".jpg,.jpeg,.png,.gif" hidden disabled={uploadingImage} onChange={handleImageUpload} />
               </label>
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 8 }}>
+              <div className="tenant-upload-grid">
                 {form.images.map((url, i) => (
-                  <div key={i} style={{ position: 'relative', width: 72, height: 72, borderRadius: 8, overflow: 'hidden', border: '1px solid var(--line)' }}>
-                    <img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <div key={i} className="tenant-upload-thumb">
+                    <img src={url} alt="" />
                     <button type="button" onClick={() => setForm((f) => ({ ...f, images: f.images.filter((_, idx) => idx !== i) }))}
-                      style={{ position: 'absolute', top: 2, right: 2, background: 'rgba(0,0,0,0.6)', color: '#fff', border: 'none', borderRadius: '50%', width: 20, height: 20, cursor: 'pointer', fontSize: '0.75rem', lineHeight: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
+                      className="tenant-upload-remove">×</button>
                   </div>
                 ))}
               </div>
             </div>
           </div>
-          <div style={{ display: 'flex', gap: 8 }}>
+          <div className="tenant-form-actions">
             <button type="button" className="btn-tenant btn-tenant-secondary" onClick={resetForm}>Batal</button>
             <button type="submit" className="btn-tenant btn-tenant-primary">Simpan</button>
           </div>
         </form>
       )}
 
-      <div className="tenant-card" style={{ padding: 0 }}>
-        <div className="tenant-table-wrap">
-          <table className="tenant-table">
-            <thead>
-              <tr>
-                <th>Nama</th>
-                <th>Kota</th>
-                <th>Kategori</th>
-                <th>Kamar</th>
-                <th style={{ textAlign: 'right' }}>Aksi</th>
-              </tr>
-            </thead>
-            <tbody>
-              {properties.map((p) => (
-                <tr key={p.id}>
-                  <td>{p.name}</td>
-                  <td>{p.city}</td>
-                  <td>{p.category?.name}</td>
-                  <td>{p.rooms?.length || 0}</td>
-                  <td style={{ textAlign: 'right' }}>
-                    <button className="btn-tenant btn-tenant-ghost" onClick={() => handleEdit(p)}>Edit</button>
-                    <button className="btn-tenant btn-tenant-danger" onClick={() => handleDelete(p.id)}>Hapus</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <TenantPagination page={meta.page} totalPages={meta.totalPages} onPageChange={setPage} />
+      {properties.length === 0 && !loading ? (
+        <div className="tenant-card">
+          <div className="empty-state">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+              <polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+            <h3>Belum Ada Properti</h3>
+            <p>Anda belum menambahkan properti. Mulai dengan menambah properti pertama Anda.</p>
+            <button type="button" className="btn-primary" onClick={() => setShowForm(true)}>
+              + Tambah Properti
+            </button>
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="tenant-card tenant-card--flush">
+          <div className="tenant-table-wrap">
+            <table className="tenant-table">
+              <thead>
+                <tr>
+                  <th>Nama</th>
+                  <th>Kota</th>
+                  <th>Kategori</th>
+                  <th>Kamar</th>
+                  <th className="tenant-table-action">Aksi</th>
+                </tr>
+              </thead>
+              <tbody>
+                {properties.map((p) => (
+                  <tr key={p.id}>
+                    <td>{p.name}</td>
+                    <td>{p.city}</td>
+                    <td>{p.category?.name}</td>
+                    <td>{p.rooms?.length || 0}</td>
+                    <td className="tenant-table-action">
+                      <button className="btn-tenant btn-tenant-ghost" onClick={() => handleEdit(p)}>Edit</button>
+                      <button className="btn-tenant btn-tenant-danger" onClick={() => handleDelete(p.id)}>Hapus</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <TenantPagination page={meta.page} totalPages={meta.totalPages} onPageChange={setPage} />
+          </div>
+        </div>
+      )}
     </TenantLayout>
   );
 }

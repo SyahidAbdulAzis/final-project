@@ -32,11 +32,11 @@ function formatDateKey(year: number, month: number, day: number) {
 }
 
 function getPriceForDate(basePrice: number, dateStr: string, rates: SeasonalRate[]) {
-  const date = new Date(dateStr);
+  const dateKey = dateStr.slice(0, 10);
   const rate = rates.find((r) => {
-    const start = new Date(r.startDate);
-    const end = new Date(r.endDate);
-    return date >= start && date <= end;
+    const startKey = r.startDate.slice(0, 10);
+    const endKey = r.endDate.slice(0, 10);
+    return dateKey >= startKey && dateKey <= endKey;
   });
   if (!rate) return basePrice;
   return rate.adjustmentType === 'PERCENTAGE'

@@ -1,10 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getPropertyDetail } from '../services/propertyApi.js';
 import { Navbar } from '../../../components/common/Navbar.js';
 import { Footer } from '../../../components/common/Footer.js';
 import { useAuth } from '../../auth/stores/AuthContext.js';
 import { PriceCalendar } from '../components/PriceCalendar.js';
+import { Dropdown } from '../../../components/common/Dropdown.js';
+import { showToast } from '../../../components/common/Toast.js';
 
 interface Room {
   id: string;
@@ -65,6 +67,11 @@ export function PropertyDetailPage() {
   const today = useMemo(() => new Date().toISOString().split('T')[0], []);
   const selectedRoomObj = property?.rooms.find((r) => r.id === selectedRoom);
   const availabilityMap = useMemo(() => buildAvailabilityMap(selectedRoomObj), [selectedRoomObj]);
+  const maxGuests = selectedRoomObj?.maxGuests || 0;
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   useEffect(() => {
     if (!id) return;
@@ -80,11 +87,11 @@ export function PropertyDetailPage() {
 
   const getRoomPrice = (room: Room, dateStr: string) => {
     if (!dateStr) return room.basePrice;
-    const date = new Date(dateStr);
+    const dateKey = dateStr.slice(0, 10);
     const rate = room.seasonalRates.find((r) => {
-      const start = new Date(r.startDate);
-      const end = new Date(r.endDate);
-      return date >= start && date <= end;
+      const startKey = r.startDate.slice(0, 10);
+      const endKey = r.endDate.slice(0, 10);
+      return dateKey >= startKey && dateKey <= endKey;
     });
     if (!rate) return room.basePrice;
     return rate.adjustmentType === 'PERCENTAGE'
@@ -122,7 +129,7 @@ export function PropertyDetailPage() {
     } else if (date > checkIn) {
       const between = getDatesInRange(checkIn, date);
       if (selectedRoomObj && between.some((d) => availabilityMap[d] === false)) {
-        alert('Rentang tanggal mencakup tanggal yang tidak tersedia. Silakan pilih rentang lain.');
+        showToast('Rentang tanggal mencakup tanggal yang tidak tersedia. Silakan pilih rentang lain.', 'error');
         return;
       }
       setCheckOut(date);
@@ -134,16 +141,16 @@ export function PropertyDetailPage() {
 
   const handleCheckout = () => {
     if (!user) {
-      alert('Silakan login terlebih dahulu untuk melakukan booking');
+      showToast('Silakan login terlebih dahulu untuk melakukan booking', 'error');
       navigate('/login/user');
       return;
     }
     if (!selectedRoom) {
-      alert('Silakan pilih kamar terlebih dahulu');
+      showToast('Silakan pilih kamar terlebih dahulu', 'error');
       return;
     }
     if (!checkIn || !checkOut) {
-      alert('Silakan pilih tanggal check-in dan check-out');
+      showToast('Silakan pilih tanggal check-in dan check-out', 'error');
       return;
     }
     navigate(`/booking/${selectedRoom}?checkIn=${checkIn}&checkOut=${checkOut}`);
@@ -398,24 +405,6 @@ export function PropertyDetailPage() {
                   <span className="pd-booking-host-label">Tuan Rumah</span>
                   <span className="pd-booking-host-name">{property.tenant.fullName}</span>
                 </div>
-                <button
-                  onClick={handleCheckout}
-                  disabled={!checkIn || !checkOut || totalPrice === 0}
-                  style={{
-                    width: '100%',
-                    padding: 14,
-                    borderRadius: 12,
-                    border: 'none',
-                    background: !checkIn || !checkOut || totalPrice === 0 ? 'var(--muted)' : 'var(--primary)',
-                    color: '#fff',
-                    fontSize: '1rem',
-                    fontWeight: 600,
-                    cursor: !checkIn || !checkOut || totalPrice === 0 ? 'not-allowed' : 'pointer',
-                    transition: 'all 0.2s',
-                  }}
-                >
-                  Checkout
-                </button>
               </div>
             </div>
           </div>

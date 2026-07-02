@@ -47,6 +47,10 @@ export function PropertyCatalogPage() {
   }, []);
 
   useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
+  useEffect(() => {
     setLoading(true);
     getProperties({ page, take: 12, city, name, category, sortBy, order, checkIn, checkOut, guests })
       .then((res) => {
@@ -142,14 +146,11 @@ export function PropertyCatalogPage() {
         </div>
 
         <div className="catalog-results">
-          {!loading && (
-            <p className="catalog-count">
-              {meta.total} properti ditemukan
-            </p>
-          )}
           <PropertyList
             loading={loading}
             items={items}
+            title="Hasil Pencarian"
+            subtitle="Pilih properti yang sesuai dengan kebutuhan Anda"
             page={meta.page}
             totalPages={meta.totalPages}
             onPageChange={(p) => updateParam('page', String(p))}
