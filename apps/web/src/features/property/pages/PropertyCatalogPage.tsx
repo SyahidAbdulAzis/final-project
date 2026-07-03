@@ -1,31 +1,16 @@
 import { useState, useEffect } from 'react';
-import { useSearchParams, Link } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { getProperties, getCategories } from '../services/propertyApi.js';
 import { Navbar } from '../../../components/common/Navbar.js';
 import { Footer } from '../../../components/common/Footer.js';
-
-interface PropertyItem {
-  id: string;
-  name: string;
-  city: string;
-  category: string;
-  description: string;
-  price: number;
-  imageUrl: string;
-  available: boolean;
-}
-
-interface Meta {
-  page: number;
-  take: number;
-  total: number;
-  totalPages: number;
-}
+import { PropertyList } from '../components/PropertyList.js';
+import { Dropdown } from '../../../components/common/Dropdown.js';
+import type { PropertyItem } from '../../../types/property';
 
 export function PropertyCatalogPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [items, setItems] = useState<PropertyItem[]>([]);
-  const [meta, setMeta] = useState<Meta>({ page: 1, take: 6, total: 0, totalPages: 1 });
+  const [meta, setMeta] = useState({ page: 1, take: 12, total: 0, totalPages: 1 });
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -38,6 +23,24 @@ export function PropertyCatalogPage() {
   const checkIn = searchParams.get('checkIn') || '';
   const checkOut = searchParams.get('checkOut') || '';
   const guests = Number(searchParams.get('guests') || '1');
+
+  const [nameDraft, setNameDraft] = useState(name);
+
+  useEffect(() => {
+    setNameDraft(name);
+  }, [name]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (nameDraft !== name) {
+        const next = new URLSearchParams(searchParams);
+        next.set('name', nameDraft);
+        next.set('page', '1');
+        setSearchParams(next);
+      }
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [nameDraft]);
 
   useEffect(() => {
     getCategories().then(setCategories).catch(() => {});
@@ -64,82 +67,94 @@ export function PropertyCatalogPage() {
   return (
     <div className="layout">
       <Navbar />
-      <main style={{ maxWidth: 1360, margin: '0 auto', padding: '28px 32px' }}>
-        <div className="tenant-page-header">
+      <main className="page-main catalog-page">
+        <div className="catalog-hero">
           <h1>Katalog Properti</h1>
-          <p>Temukan tempat menginap terbaik</p>
+          <p>Temukan tempat menginap terbaik sesuai kebutuhan Anda</p>
         </div>
 
-        <div className="tenant-filter-bar">
-          <input
-            type="text"
-            placeholder="Cari nama properti..."
-            value={name}
-            onChange={(e) => updateParam('name', e.target.value)}
+        <div className="catalog-filter-panel">
+          <div className="filter-field">
+            <label htmlFor="catalog-name">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              Nama
+            </label>
+            <input
+              id="catalog-name"
+              type="text"
+              placeholder="Cari nama properti..."
+              value={nameDraft}
+              onChange={(e) => setNameDraft(e.target.value)}
+            />
+          </div>
+          <div className="filter-field">
+            <Dropdown
+              id="catalog-city"
+              label="Kota"
+              value={city}
+              options={[
+                { value: 'Semua', label: 'Semua Kota' },
+                { value: 'Jakarta', label: 'Jakarta' },
+                { value: 'Bali', label: 'Bali' },
+                { value: 'Bandung', label: 'Bandung' },
+                { value: 'Yogyakarta', label: 'Yogyakarta' },
+                { value: 'Surabaya', label: 'Surabaya' },
+              ]}
+              onChange={(value) => updateParam('city', value)}
+              variant="default"
+            />
+          </div>
+          <div className="filter-field">
+            <Dropdown
+              id="catalog-category"
+              label="Kategori"
+              value={category}
+              options={[
+                { value: 'Semua', label: 'Semua Kategori' },
+                ...categories.map((c) => ({ value: c.name, label: c.name })),
+              ]}
+              onChange={(value) => updateParam('category', value)}
+              variant="default"
+            />
+          </div>
+          <div className="filter-field">
+            <Dropdown
+              id="catalog-sort"
+              label="Urutkan"
+              value={`${sortBy}-${order}`}
+              options={[
+                { value: 'name-asc', label: 'Nama (A-Z)' },
+                { value: 'name-desc', label: 'Nama (Z-A)' },
+                { value: 'price-asc', label: 'Harga (Termurah)' },
+                { value: 'price-desc', label: 'Harga (Termahal)' },
+              ]}
+              onChange={(value) => {
+                const [sb, ord] = value.split('-');
+                const next = new URLSearchParams(searchParams);
+                next.set('sortBy', sb);
+                next.set('order', ord);
+                next.set('page', '1');
+                setSearchParams(next);
+              }}
+              variant="default"
+            />
+          </div>
+        </div>
+
+        <div className="catalog-results">
+          {!loading && (
+            <p className="catalog-count">
+              {meta.total} properti ditemukan
+            </p>
+          )}
+          <PropertyList
+            loading={loading}
+            items={items}
+            page={meta.page}
+            totalPages={meta.totalPages}
+            onPageChange={(p) => updateParam('page', String(p))}
           />
-          <select value={city} onChange={(e) => updateParam('city', e.target.value)}>
-            <option value="Semua">Semua Kota</option>
-            <option value="Jakarta">Jakarta</option>
-            <option value="Bali">Bali</option>
-            <option value="Bandung">Bandung</option>
-            <option value="Yogyakarta">Yogyakarta</option>
-            <option value="Surabaya">Surabaya</option>
-          </select>
-          <select value={category} onChange={(e) => updateParam('category', e.target.value)}>
-            <option value="Semua">Semua Kategori</option>
-            {categories.map((c) => (
-              <option key={c.id} value={c.name}>{c.name}</option>
-            ))}
-          </select>
-          <select value={`${sortBy}-${order}`} onChange={(e) => {
-            const [sb, ord] = e.target.value.split('-');
-            const next = new URLSearchParams(searchParams);
-            next.set('sortBy', sb);
-            next.set('order', ord);
-            next.set('page', '1');
-            setSearchParams(next);
-          }}>
-            <option value="name-asc">Nama (A-Z)</option>
-            <option value="name-desc">Nama (Z-A)</option>
-            <option value="price-asc">Harga (Termurah)</option>
-            <option value="price-desc">Harga (Termahal)</option>
-          </select>
         </div>
-
-        {loading ? (
-          <p style={{ color: 'var(--muted)' }}>Memuat...</p>
-        ) : items.length === 0 ? (
-          <p style={{ color: 'var(--muted)' }}>Tidak ada properti yang tersedia.</p>
-        ) : (
-          <div className="catalog-grid">
-            {items.map((item) => (
-              <Link to={`/properties/${item.id}`} key={item.id} className="catalog-card">
-                <div className="catalog-card-image" style={{ backgroundImage: item.imageUrl ? `url(${item.imageUrl})` : undefined }} />
-                <div className="catalog-card-body">
-                  <div className="catalog-card-title">{item.name}</div>
-                  <div className="catalog-card-meta">{item.city} · {item.category}</div>
-                  <div className="catalog-card-price">
-                    Rp {item.price.toLocaleString('id-ID')} <span>/malam</span>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        )}
-
-        {meta.totalPages > 1 && (
-          <div className="tenant-pagination">
-            {Array.from({ length: meta.totalPages }, (_, i) => i + 1).map((p) => (
-              <button
-                key={p}
-                className={p === page ? 'active' : ''}
-                onClick={() => updateParam('page', String(p))}
-              >
-                {p}
-              </button>
-            ))}
-          </div>
-        )}
       </main>
       <Footer />
     </div>

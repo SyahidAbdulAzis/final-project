@@ -72,18 +72,16 @@ function App() {
               <Route path="/tenant/reports" element={<ReportPage />} />
               <Route path="/tenant/reports/property" element={<PropertyReportPage />} />
 
-              {/* Tenant Dashboard */}
-              <Route path="/tenant/dashboard" element={<ProtectedRoute role="tenant"><TenantDashboardPage /></ProtectedRoute>} />
-              <Route path="/tenant/properties" element={<ProtectedRoute role="tenant"><TenantPropertiesPage /></ProtectedRoute>} />
-              <Route path="/tenant/categories" element={<ProtectedRoute role="tenant"><TenantCategoriesPage /></ProtectedRoute>} />
-              <Route path="/tenant/rooms" element={<ProtectedRoute role="tenant"><TenantRoomsPage /></ProtectedRoute>} />
-              <Route path="/tenant/availability" element={<ProtectedRoute role="tenant"><TenantAvailabilityPage /></ProtectedRoute>} />
-              <Route path="/tenant/reviews" element={<ProtectedRoute role="tenant"><TenantReviewsPage /></ProtectedRoute>} />
-            </Routes>
-          </BrowserRouter>
-        </AuthProvider>
-      </ToastProvider>
-    </ErrorBoundary>
+          {/* Tenant Dashboard */}
+          <Route path="/tenant/dashboard" element={<ProtectedRoute role="tenant"><TenantDashboardPage /></ProtectedRoute>} />
+          <Route path="/tenant/properties" element={<ProtectedRoute role="tenant"><TenantPropertiesPage /></ProtectedRoute>} />
+          <Route path="/tenant/categories" element={<ProtectedRoute role="tenant"><TenantCategoriesPage /></ProtectedRoute>} />
+          <Route path="/tenant/rooms" element={<ProtectedRoute role="tenant"><TenantRoomsPage /></ProtectedRoute>} />
+          <Route path="/tenant/availability" element={<ProtectedRoute role="tenant"><TenantAvailabilityPage /></ProtectedRoute>} />
+          <Route path="/tenant/reviews" element={<ProtectedRoute role="tenant"><TenantReviewsPage /></ProtectedRoute>} />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }
 

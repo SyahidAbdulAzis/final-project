@@ -11,10 +11,12 @@ interface SeasonalRate {
 interface Props {
   basePrice: number;
   seasonalRates: SeasonalRate[];
+  availabilityMap?: Record<string, boolean>;
   onSelect: (date: string) => void;
   selectedDate?: string;
   checkOutDate?: string;
   offsetMonths?: number;
+  minDate?: string;
 }
 
 function getDaysInMonth(year: number, month: number) {
@@ -50,7 +52,7 @@ function isBetween(dateStr: string, startStr: string, endStr: string) {
   return date >= start && date <= end;
 }
 
-export function PriceCalendar({ basePrice, seasonalRates, onSelect, selectedDate, checkOutDate, offsetMonths = 0 }: Props) {
+export function PriceCalendar({ basePrice, seasonalRates, availabilityMap, onSelect, selectedDate, checkOutDate, offsetMonths = 0, minDate }: Props) {
   const today = new Date();
   const baseMonth = today.getMonth() + offsetMonths;
   const baseYear = today.getFullYear() + Math.floor(baseMonth / 12);
@@ -62,19 +64,23 @@ export function PriceCalendar({ basePrice, seasonalRates, onSelect, selectedDate
   const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
   const dayNames = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
 
+  const minDateKey = minDate || formatDateKey(today.getFullYear(), today.getMonth(), today.getDate());
+
   const days = useMemo(() => {
     const totalDays = getDaysInMonth(viewYear, viewMonth);
     const firstDay = getFirstDayOfMonth(viewYear, viewMonth);
-    const cells: { day: number; price: number; key: string; isInRange: boolean }[] = [];
-    for (let i = 0; i < firstDay; i++) cells.push({ day: 0, price: 0, key: `pad-${i}`, isInRange: false });
+    const cells: { day: number; price: number; key: string; isInRange: boolean; disabled: boolean; isUnavailable: boolean }[] = [];
+    for (let i = 0; i < firstDay; i++) cells.push({ day: 0, price: 0, key: `pad-${i}`, isInRange: false, disabled: false, isUnavailable: false });
     for (let d = 1; d <= totalDays; d++) {
       const key = formatDateKey(viewYear, viewMonth, d);
       const price = getPriceForDate(basePrice, key, seasonalRates);
       const isInRange = selectedDate && checkOutDate ? isBetween(key, selectedDate, checkOutDate) : false;
-      cells.push({ day: d, price, key, isInRange });
+      const isPast = key < minDateKey;
+      const isUnavailable = availabilityMap ? availabilityMap[key] === false : false;
+      cells.push({ day: d, price, key, isInRange, disabled: isPast || isUnavailable, isUnavailable });
     }
     return cells;
-  }, [viewYear, viewMonth, basePrice, seasonalRates, selectedDate, checkOutDate]);
+  }, [viewYear, viewMonth, basePrice, seasonalRates, selectedDate, checkOutDate, availabilityMap, minDateKey]);
 
   const prevMonth = () => {
     if (viewMonth === 0) { setViewMonth(11); setViewYear((y) => y - 1); }
@@ -106,11 +112,12 @@ export function PriceCalendar({ basePrice, seasonalRates, onSelect, selectedDate
             <button
               key={cell.key}
               type="button"
-              className={`pc-cell${selectedDate === cell.key ? ' pc-cell--selected' : ''}${cell.isInRange ? ' pc-cell--range' : ''}`}
+              disabled={cell.disabled}
+              className={`pc-cell${selectedDate === cell.key ? ' pc-cell--selected' : ''}${cell.isInRange ? ' pc-cell--range' : ''}${cell.disabled ? ' pc-cell--disabled' : ''}${cell.isUnavailable ? ' pc-cell--unavailable' : ''}`}
               onClick={() => onSelect(cell.key)}
             >
               <span className="pc-date">{cell.day}</span>
-              <span className="pc-price">Rp {(cell.price / 1000).toFixed(0)}k</span>
+              <span className="pc-price">{cell.isUnavailable ? 'Penuh' : `Rp ${(cell.price / 1000).toFixed(0)}k`}</span>
             </button>
           )
         )}

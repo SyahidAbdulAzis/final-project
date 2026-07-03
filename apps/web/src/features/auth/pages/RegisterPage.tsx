@@ -57,6 +57,12 @@ export function RegisterPage({ role = 'user' }: RegisterPageProps) {
       <Navbar variant="minimal" />
       <div className="auth-layout">
         <div className="auth-card">
+          <div className="auth-brand-mark">
+            <div className="auth-brand-logo">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            </div>
+            <span className="auth-brand-name">StayEase</span>
+          </div>
           <h1 className="auth-title">Daftar</h1>
           <p className="auth-subtitle">
             {isTenant
