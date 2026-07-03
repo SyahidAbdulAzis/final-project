@@ -6,6 +6,7 @@ import { getRoomById } from '../../property/services/propertyApi';
 import { useBooking } from '../hooks/useBooking';
 import { useAuth } from '../../auth/stores/AuthContext';
 import { getRoomAvailability } from '../services/bookingApi';
+import { showToast } from '../../../components/common/Toast';
 
 interface Room {
   id: string;
@@ -83,7 +84,7 @@ export function BookingPage() {
     }
     
     if (!room || !checkIn || !checkOut || totalPrice === 0) {
-      alert('Mohon lengkapi tanggal check-in dan check-out');
+      showToast('Mohon lengkapi tanggal check-in dan check-out', 'error');
       return;
     }
 
@@ -91,7 +92,7 @@ export function BookingPage() {
     try {
       const unavailableDates = await getRoomAvailability(room.id, checkIn, checkOut);
       if (unavailableDates.length > 0) {
-        alert('Kamar sudah dibooking untuk tanggal tersebut. Silakan pilih tanggal lain.');
+        showToast('Kamar sudah dibooking untuk tanggal tersebut. Silakan pilih tanggal lain.', 'error');
         return;
       }
     } catch (err) {
@@ -109,10 +110,10 @@ export function BookingPage() {
 
     const result = await submitBooking(bookingData);
     if (result) {
-      alert('CHECKOUT BERHASIL SILAHKAN PAYMENT');
+      showToast('Booking berhasil! Silakan lanjut ke pembayaran', 'success');
       navigate(`/payment/${result.id}`);
     } else if (error) {
-      alert(error);
+      showToast(error, 'error');
     }
   };
 

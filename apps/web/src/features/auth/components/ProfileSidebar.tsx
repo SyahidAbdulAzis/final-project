@@ -27,6 +27,11 @@ export function ProfileSidebar({ photoPreview, setPhotoPreview, showSaved, setEr
   const handlePhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    const allowed = ['.jpg', '.jpeg', '.png', '.gif'];
+    if (!allowed.some((ext) => file.name.toLowerCase().endsWith(ext))) {
+      setError('Format foto harus JPG, PNG, atau GIF.');
+      return;
+    }
     if (file.size > 1 * 1024 * 1024) {
       setError('Ukuran foto maksimal 1MB.');
       return;
@@ -45,31 +50,54 @@ export function ProfileSidebar({ photoPreview, setPhotoPreview, showSaved, setEr
   return (
     <aside className="pw-sidebar">
       <div className="pw-user-card">
-        <div className="pw-avatar-block">
+        {/* Avatar */}
+        <div className="pw-avatar-ring">
           <div className="pw-avatar pw-avatar--lg">
-            {photoPreview ? <img src={photoPreview} alt="" /> : <div className="pw-avatar-fallback">{userInitial}</div>}
+            {photoPreview
+              ? <img src={photoPreview} alt="" />
+              : <div className="pw-avatar-fallback">{userInitial}</div>
+            }
           </div>
-          <label className="pw-avatar-btn" title="Tambahkan foto">
-            {icons.camera}
-            <span>Tambahkan</span>
+          <label className="pw-avatar-edit" title="Ganti foto profil">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
             <input type="file" accept=".jpg,.jpeg,.png,.gif" hidden onChange={handlePhoto} />
           </label>
         </div>
-        <div className="pw-user-name-row">
-          <h1 className="pw-user-name">{user?.name || 'Pengguna'}</h1>
-        </div>
+
+        {/* Name & status */}
+        <h1 className="pw-user-name">{user?.name || 'Pengguna'}</h1>
         <div className="pw-verify-row">
           {user?.isVerified ? (
-            <span className="pw-verify-badge ok"><span className="pw-verify-dot ok">{icons.check}</span> Terverifikasi</span>
+            <span className="pw-verify-badge ok">
+              <span className="pw-verify-dot ok">{icons.check}</span> Terverifikasi
+            </span>
           ) : (
-            <span className="pw-verify-badge warn"><span className="pw-verify-dot warn">{icons.alert}</span> Belum terverifikasi</span>
+            <span className="pw-verify-badge warn">
+              <span className="pw-verify-dot warn">{icons.alert}</span> Belum terverifikasi
+            </span>
           )}
         </div>
-        <p className="pw-user-email">{user?.email || '-'}</p>
-        <div className="pw-user-badges">
-          <span className={`pw-role ${user?.role}`}>{user?.role === 'tenant' ? 'Tuan Rumah' : 'Tamu'}</span>
+
+        {/* Info rows */}
+        <div className="pw-info-rows">
+          <div className="pw-info-row">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            <span>{user?.email || '-'}</span>
+          </div>
+          <div className="pw-info-row">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <span className={`pw-role ${user?.role}`}>{user?.role === 'tenant' ? 'Tuan Rumah' : 'Tamu'}</span>
+          </div>
         </div>
-        {!user?.isVerified && <button type="button" className="pw-resend" onClick={handleResend}>Kirim ulang verifikasi email</button>}
+
+        {!user?.isVerified && (
+          <button type="button" className="pw-resend" onClick={handleResend}>
+            Kirim ulang verifikasi email
+          </button>
+        )}
+
+        <div className="pw-divider" />
+
         <button type="button" className="pw-logout" onClick={onLogout}>
           {icons.logout} Keluar dari Akun
         </button>

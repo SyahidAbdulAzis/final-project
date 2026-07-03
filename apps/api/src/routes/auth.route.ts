@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import passport from 'passport';
+import { verifyToken } from '../middlewares/auth.middleware.js';
 import {
   changePasswordHandler,
   forgotPasswordHandler,
@@ -20,9 +21,9 @@ authRouter.post('/auth/login/:role', loginHandler);
 authRouter.post('/auth/resend-verification', resendHandler);
 authRouter.post('/auth/forgot-password', forgotPasswordHandler);
 authRouter.post('/auth/reset-password', resetPasswordHandler);
-authRouter.get('/auth/profile/:email', profileGetHandler);
-authRouter.patch('/auth/profile/:email', profilePatchHandler);
-authRouter.patch('/auth/profile/:email/password', changePasswordHandler);
+authRouter.get('/auth/profile/:email', verifyToken as any, profileGetHandler as any);
+authRouter.patch('/auth/profile/:email', verifyToken as any, profilePatchHandler as any);
+authRouter.patch('/auth/profile/:email/password', verifyToken as any, changePasswordHandler as any);
 
 authRouter.get('/auth/google/callback',
   passport.authenticate('google', { session: false, failureRedirect: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/login?error=google_failed` }),
