@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../stores/AuthContext.js';
 import { icons } from '../components/ProfileIcons.js';
 import { Navbar } from '../../../components/common/Navbar.js';
@@ -19,6 +19,10 @@ export function ProfilePage() {
     setSavedMsg(msg); setSaved(true);
     setTimeout(() => setSaved(false), 3000);
   };
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   return (
     <div className="layout">

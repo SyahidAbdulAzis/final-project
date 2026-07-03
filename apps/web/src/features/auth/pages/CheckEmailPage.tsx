@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { resendVerificationApi } from '../services/authApi.js';
 import { Navbar } from '../../../components/common/Navbar.js';
@@ -22,6 +22,10 @@ export function CheckEmailPage() {
       setError(msg || 'Gagal mengirim ulang email. Coba lagi.');
     }
   };
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   return (
     <div className="layout">

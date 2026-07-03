@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../stores/AuthContext.js';
+import { showToast } from '../../../components/common/Toast.js';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -13,9 +14,9 @@ export function ProtectedRoute({ children, role }: ProtectedRouteProps) {
 
   useEffect(() => {
     if (!isAuthenticated) {
-      sessionStorage.setItem('authRedirectMsg', 'Silakan masuk terlebih dahulu untuk mengakses halaman ini.');
+      showToast('Silakan masuk terlebih dahulu untuk mengakses halaman ini.', 'error');
     } else if (role && user?.role !== role) {
-      sessionStorage.setItem('authRedirectMsg', 'Anda tidak memiliki akses ke halaman tersebut.');
+      showToast('Anda tidak memiliki akses ke halaman tersebut.', 'error');
     }
   }, [isAuthenticated, role, user?.role]);
 

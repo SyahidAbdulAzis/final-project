@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -7,6 +7,7 @@ import { useAuth } from '../stores/AuthContext.js';
 import { loginApi, getProfileApi } from '../services/authApi.js';
 import { Navbar } from '../../../components/common/Navbar.js';
 import { Footer } from '../../../components/common/Footer.js';
+import { PasswordInput } from '../../../components/common/PasswordInput.js';
 
 interface LoginPageProps {
   role?: 'user' | 'tenant';
@@ -43,6 +44,10 @@ export function LoginPage({ role = 'user' }: LoginPageProps) {
       navigate(user.role === 'tenant' ? '/tenant/dashboard' : '/');
     }
   }, [user, navigate]);
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
   const {
     register,
     handleSubmit,
@@ -98,12 +103,11 @@ export function LoginPage({ role = 'user' }: LoginPageProps) {
 
           <div className="field-group">
             <label htmlFor="password">Password</label>
-            <input
+            <PasswordInput
               id="password"
-              type="password"
               placeholder="••••••••"
+              hasError={!!errors.password}
               {...register('password')}
-              className={errors.password ? 'input-error' : ''}
             />
             {errors.password && <span className="field-error">{errors.password.message}</span>}
           </div>

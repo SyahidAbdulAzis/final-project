@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useSearchParams, useNavigate } from 'react-router-dom';
@@ -6,6 +6,7 @@ import { resetSchema, type ResetForm } from '../validations/authSchemas.js';
 import { resetPasswordApi } from '../services/authApi.js';
 import { Navbar } from '../../../components/common/Navbar.js';
 import { Footer } from '../../../components/common/Footer.js';
+import { PasswordInput } from '../../../components/common/PasswordInput.js';
 
 export function ResetPasswordPage() {
   const [searchParams] = useSearchParams();
@@ -35,6 +36,10 @@ export function ResetPasswordPage() {
     }
   };
 
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   return (
     <div className="layout">
       <Navbar variant="minimal" />
@@ -58,24 +63,22 @@ export function ResetPasswordPage() {
 
             <div className="field-group">
               <label htmlFor="password">Password Baru</label>
-              <input
+              <PasswordInput
                 id="password"
-                type="password"
                 placeholder="Minimal 8 karakter"
+                hasError={!!errors.password}
                 {...register('password')}
-                className={errors.password ? 'input-error' : ''}
               />
               {errors.password && <span className="field-error">{errors.password.message}</span>}
             </div>
 
             <div className="field-group">
               <label htmlFor="confirmPassword">Konfirmasi Password</label>
-              <input
+              <PasswordInput
                 id="confirmPassword"
-                type="password"
                 placeholder="Ulangi password"
+                hasError={!!errors.confirmPassword}
                 {...register('confirmPassword')}
-                className={errors.confirmPassword ? 'input-error' : ''}
               />
               {errors.confirmPassword && (
                 <span className="field-error">{errors.confirmPassword.message}</span>
