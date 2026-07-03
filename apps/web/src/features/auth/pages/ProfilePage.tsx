@@ -23,9 +23,12 @@ export function ProfilePage() {
   return (
     <div className="layout">
       <Navbar />
-      <div className="profile-wide">
+      <div className="prf-page">
         {saved && <div className="pro-toast success">{icons.check} {savedMsg}</div>}
-        {profileError && <p className="field-error api-error">{profileError}</p>}
+
+        <div className="prf-banner">
+          <div className="prf-banner-overlay" />
+        </div>
 
         <div className="pw-layout">
           <ProfileSidebar
@@ -36,6 +39,7 @@ export function ProfilePage() {
             onLogout={logout}
           />
           <main className="pw-main">
+            {profileError && <p className="field-error api-error prf-api-error">{profileError}</p>}
             <ProfileInfoSection showSaved={showSaved} setError={setProfileError} />
             <PasswordSection showSaved={showSaved} setError={setPasswordError} />
           </main>

@@ -15,6 +15,7 @@ export type BookingResponse = {
   checkOut: string;
   totalPrice: number;
   status: 'MENUNGGU_PEMBAYARAN' | 'MENUNGGU_KONFIRMASI' | 'DIKONFIRMASI' | 'DIBATALKAN' | 'KADALUARSA';
+  expiresAt: string | null;
   createdAt: string;
   updatedAt: string;
   user: {
