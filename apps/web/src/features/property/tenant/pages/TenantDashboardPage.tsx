@@ -1,22 +1,38 @@
 import { useState, useEffect } from 'react';
-import { getTenantProperties } from '../../services/propertyApi.js';
+import { getTenantProperties, getTenantBookings } from '../../services/propertyApi.js';
+import { useAuth } from '../../../auth/stores/AuthContext.js';
 import { TenantLayout } from '../components/TenantLayout.js';
 
+const ACTIVE_STATUSES = ['MENUNGGU_PEMBAYARAN', 'MENUNGGU_KONFIRMASI', 'DIKONFIRMASI'];
+
 export function TenantDashboardPage() {
+  const { user } = useAuth();
   const [stats, setStats] = useState({ properties: 0, rooms: 0, activeBookings: 0, revenue: 0 });
 
   useEffect(() => {
-    getTenantProperties()
-      .then((properties) => {
-        const roomCount = properties.reduce((sum: number, p: { rooms?: unknown[] }) => sum + (p.rooms?.length || 0), 0);
-        setStats({
-          properties: properties.length,
-          rooms: roomCount,
-          activeBookings: 0,
-          revenue: 0,
-        });
-      })
-      .catch(() => {});
+    if (!user?.id) return;
+    Promise.all([
+      getTenantProperties(1, 100),
+      getTenantBookings(user.id, 1, 100),
+    ]).then(([propRes, bookingRes]) => {
+      const props = propRes?.data ?? [];
+      const roomCount = props.reduce((sum: number, p: { rooms?: unknown[] }) => sum + (p.rooms?.length || 0), 0);
+      const bookings = bookingRes?.bookings ?? [];
+      const activeCount = bookings.filter((b: { status: string }) => ACTIVE_STATUSES.includes(b.status)).length;
+      const revenue = bookings
+        .filter((b: { status: string }) => b.status === 'DIKONFIRMASI')
+        .reduce((sum: number, b: { totalPrice: number }) => sum + (b.totalPrice || 0), 0);
+      setStats({
+        properties: propRes?.meta?.total ?? props.length,
+        rooms: roomCount,
+        activeBookings: activeCount,
+        revenue,
+      });
+    }).catch(() => {});
+  }, [user?.id]);
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
   }, []);
 
   const cards = [
@@ -53,7 +69,7 @@ export function TenantDashboardPage() {
         <div className="tenant-card-header">
           <h2>Aktivitas Terbaru</h2>
         </div>
-        <p style={{ color: 'var(--muted)', fontSize: '0.9rem' }}>Belum ada aktivitas terbaru.</p>
+        <p className="text-[0.9rem] text-(--muted)">Belum ada aktivitas terbaru.</p>
       </div>
     </TenantLayout>
   );

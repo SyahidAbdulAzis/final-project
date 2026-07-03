@@ -3,8 +3,24 @@ import { TenantLayout } from '../components/TenantLayout.js';
 import { getTenantProperties, getRoomsByProperty, createRoom, updateRoom, deleteRoom } from '../../services/propertyApi.js';
 import { TenantPagination } from '../../../../components/common/TenantPagination.js';
 import { Dropdown } from '../../../../components/common/Dropdown.js';
+import { showToast } from '../../../../components/common/Toast.js';
 
 const PAGE_SIZE = 10;
+const EMPTY_META = { page: 1, take: PAGE_SIZE, total: 0, totalPages: 1 };
+
+interface Property {
+  id: string;
+  name: string;
+}
+
+interface Room {
+  id: string;
+  propertyId: string;
+  name: string;
+  description: string;
+  basePrice: number;
+  maxGuests: number;
+}
 
 interface RoomForm {
   propertyId: string;
@@ -15,50 +31,49 @@ interface RoomForm {
 }
 
 export function TenantRoomsPage() {
-  const [properties, setProperties] = useState<any[]>([]);
-  const [rooms, setRooms] = useState<any[]>([]);
+  const [properties, setProperties] = useState<Property[]>([]);
+  const [rooms, setRooms] = useState<Room[]>([]);
+  const [meta, setMeta] = useState(EMPTY_META);
   const [page, setPage] = useState(1);
+  const [sortBy, setSortBy] = useState('createdAt');
+  const [order, setOrder] = useState<'asc' | 'desc'>('desc');
   const [selectedProperty, setSelectedProperty] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<RoomForm>({ propertyId: '', name: '', description: '', basePrice: 0, maxGuests: 2 });
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const totalPages = Math.max(1, Math.ceil(rooms.length / PAGE_SIZE));
-  const pagedRooms = rooms.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   useEffect(() => {
-    setLoading(true);
     getTenantProperties()
       .then((response) => {
         const props = response.data || [];
         setProperties(props);
         if (props[0]) { setSelectedProperty(props[0].id); }
-        setLoading(false);
+        else setLoading(false);
       })
-      .catch((err) => {
-        console.error('Error loading properties:', err);
-        setError('Gagal memuat properti');
-        setLoading(false);
-      });
+      .catch(() => { setLoading(false); showToast('Gagal memuat properti', 'error'); });
+  }, []);
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
   }, []);
 
   useEffect(() => {
     if (!selectedProperty) return;
     setPage(1);
+  }, [selectedProperty]);
+
+  useEffect(() => {
+    if (!selectedProperty) return;
     setLoading(true);
-    getRoomsByProperty(selectedProperty)
-      .then((r) => {
-        setRooms(r);
+    getRoomsByProperty(selectedProperty, page, PAGE_SIZE, sortBy, order)
+      .then((res) => {
+        setRooms(res?.data ?? []);
+        setMeta(res?.meta ?? EMPTY_META);
         setLoading(false);
       })
-      .catch((err) => {
-        console.error('Error loading rooms:', err);
-        setError('Gagal memuat kamar');
-        setLoading(false);
-      });
-  }, [selectedProperty]);
+      .catch(() => { setLoading(false); showToast('Gagal memuat kamar', 'error'); });
+  }, [selectedProperty, page, sortBy, order]);
 
   const resetForm = () => {
     setForm({ propertyId: selectedProperty, name: '', description: '', basePrice: 0, maxGuests: 2 });
@@ -72,11 +87,11 @@ export function TenantRoomsPage() {
       if (editingId) { await updateRoom(editingId, form); }
       else { await createRoom(form); }
       resetForm();
-      getRoomsByProperty(selectedProperty).then(setRooms).catch(() => {});
-    } catch { alert('Gagal menyimpan kamar'); }
+      refreshRooms();
+    } catch { showToast('Gagal menyimpan kamar', 'error'); }
   };
 
-  const handleEdit = (r: any) => {
+  const handleEdit = (r: Room) => {
     setForm({ propertyId: r.propertyId, name: r.name, description: r.description, basePrice: r.basePrice, maxGuests: r.maxGuests });
     setEditingId(r.id);
     setShowForm(true);
@@ -84,39 +99,21 @@ export function TenantRoomsPage() {
 
   const handleDelete = async (id: string) => {
     if (!confirm('Yakin ingin menghapus kamar ini?')) return;
-    try { await deleteRoom(id); getRoomsByProperty(selectedProperty).then(setRooms).catch(() => {}); }
-    catch { alert('Gagal menghapus kamar'); }
+    try { await deleteRoom(id); refreshRooms(); showToast('Kamar berhasil dihapus', 'success'); }
+    catch { showToast('Gagal menghapus kamar', 'error'); }
+  };
+
+  const refreshRooms = () => {
+    getRoomsByProperty(selectedProperty, page, PAGE_SIZE, sortBy, order)
+      .then((res) => { setRooms(res?.data ?? []); setMeta(res?.meta ?? EMPTY_META); })
+      .catch(() => {});
   };
 
   if (loading) {
     return (
       <TenantLayout>
-        <div style={{ padding: 40, textAlign: 'center' }}>
+        <div className="tenant-loading">
           <p>Memuat data...</p>
-        </div>
-      </TenantLayout>
-    );
-  }
-
-  if (error) {
-    return (
-      <TenantLayout>
-        <div style={{ padding: 40, textAlign: 'center' }}>
-          <p style={{ color: '#f44336' }}>{error}</p>
-          <button 
-            onClick={() => window.location.reload()}
-            style={{
-              marginTop: 16,
-              padding: '10px 20px',
-              borderRadius: 8,
-              border: '1px solid var(--primary)',
-              background: 'var(--primary)',
-              color: '#fff',
-              cursor: 'pointer'
-            }}
-          >
-            Reload
-          </button>
         </div>
       </TenantLayout>
     );
@@ -131,14 +128,35 @@ export function TenantRoomsPage() {
         </button>
       </div>
 
-      <div style={{ maxWidth: 300, marginBottom: 16 }}>
-        <Dropdown
-          label="Properti"
-          value={selectedProperty}
-          options={properties.map((p) => ({ value: p.id, label: p.name }))}
-          onChange={(value) => setSelectedProperty(value)}
-          variant="pill"
-        />
+      <div className="tenant-dropdown-row">
+        <div>
+          <Dropdown
+            label="Properti"
+            value={selectedProperty}
+            options={properties.map((p) => ({ value: p.id, label: p.name }))}
+            onChange={(value) => setSelectedProperty(value)}
+            variant="pill"
+          />
+        </div>
+        <div>
+          <Dropdown
+            label="Urutkan"
+            value={`${sortBy}-${order}`}
+            options={[
+              { value: 'createdAt-desc', label: 'Terbaru' },
+              { value: 'createdAt-asc', label: 'Terlama' },
+              { value: 'name-asc', label: 'Nama (A-Z)' },
+              { value: 'name-desc', label: 'Nama (Z-A)' },
+              { value: 'basePrice-asc', label: 'Harga (Termurah)' },
+              { value: 'basePrice-desc', label: 'Harga (Termahal)' },
+            ]}
+            onChange={(value) => {
+              const [sb, ord] = value.split('-');
+              setSortBy(sb); setOrder(ord as 'asc' | 'desc'); setPage(1);
+            }}
+            variant="pill"
+          />
+        </div>
       </div>
 
       {showForm && (
@@ -161,14 +179,14 @@ export function TenantRoomsPage() {
               <textarea rows={2} value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} />
             </div>
           </div>
-          <div style={{ display: 'flex', gap: 8 }}>
+          <div className="tenant-form-actions">
             <button type="button" className="btn-tenant btn-tenant-secondary" onClick={resetForm}>Batal</button>
             <button type="submit" className="btn-tenant btn-tenant-primary">Simpan</button>
           </div>
         </form>
       )}
 
-      <div className="tenant-card" style={{ padding: 0 }}>
+      <div className="tenant-card tenant-card--flush">
         <div className="tenant-table-wrap">
           <table className="tenant-table">
             <thead>
@@ -176,16 +194,16 @@ export function TenantRoomsPage() {
                 <th>Nama</th>
                 <th>Harga</th>
                 <th>Max Tamu</th>
-                <th style={{ textAlign: 'right' }}>Aksi</th>
+                <th className="tenant-table-action">Aksi</th>
               </tr>
             </thead>
             <tbody>
-              {pagedRooms.map((r) => (
+              {rooms.map((r) => (
                 <tr key={r.id}>
                   <td>{r.name}</td>
                   <td>Rp {r.basePrice.toLocaleString('id-ID')}</td>
                   <td>{r.maxGuests}</td>
-                  <td style={{ textAlign: 'right' }}>
+                  <td className="tenant-table-action">
                     <button className="btn-tenant btn-tenant-ghost" onClick={() => handleEdit(r)}>Edit</button>
                     <button className="btn-tenant btn-tenant-danger" onClick={() => handleDelete(r.id)}>Hapus</button>
                   </td>
@@ -193,7 +211,7 @@ export function TenantRoomsPage() {
               ))}
             </tbody>
           </table>
-          <TenantPagination page={page} totalPages={totalPages} onPageChange={setPage} />
+          <TenantPagination page={meta.page} totalPages={meta.totalPages} onPageChange={setPage} />
         </div>
       </div>
     </TenantLayout>
