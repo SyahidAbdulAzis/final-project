@@ -82,6 +82,8 @@ function App() {
         </Routes>
       </BrowserRouter>
     </AuthProvider>
+    </ToastProvider>
+    </ErrorBoundary>
   );
 }
 

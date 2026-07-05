@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { TenantLayout } from '../components/TenantLayout.js';
 import { getTenantReviews, replyToReview, type ReviewResponse } from '../../../booking/services/reviewApi.js';
 import { useAuth } from '../../../auth/stores/AuthContext.js';
+import { showToast } from '../../../../components/common/Toast.js';
 
 export function TenantReviewsPage() {
   const { user } = useAuth();

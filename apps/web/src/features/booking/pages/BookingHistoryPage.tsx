@@ -19,8 +19,8 @@ function StarInput({ value, onChange }: { value: number; onChange: (v: number) =
           type="button"
           onClick={() => onChange(star)}
           style={{ background: 'none', border: 'none', fontSize: '2rem', cursor: 'pointer', color: star <= value ? '#f5a623' : '#ddd', transition: 'color 0.15s', padding: '0 2px' }}
-          onMouseEnter={(e) => { if (star > value) (e.target).style.color = '#f5a623'; }}
-          onMouseLeave={(e) => { if (star > value) (e.target).style.color = '#ddd'; }}
+          onMouseEnter={(e) => { if (star > value) (e.target as HTMLElement).style.color = '#f5a623'; }}
+          onMouseLeave={(e) => { if (star > value) (e.target as HTMLElement).style.color = '#ddd'; }}
         >
           ★
         </button>
