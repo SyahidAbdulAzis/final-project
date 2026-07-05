@@ -8,8 +8,17 @@ export type PropertyQuery = {
 };
 
 export type ReviewItem = {
+  id: string;
   rating: number;
   comment: string;
+  tenantReply: string | null;
+  repliedAt: string | null;
+  createdAt: string;
+  user: {
+    id: string;
+    fullName: string;
+    photoUrl: string | null;
+  };
 };
 
 export type PropertyItem = {

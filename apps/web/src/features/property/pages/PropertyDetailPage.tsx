@@ -7,6 +7,7 @@ import { useAuth } from '../../auth/stores/AuthContext.js';
 import { PriceCalendar } from '../components/PriceCalendar.js';
 import { Dropdown } from '../../../components/common/Dropdown.js';
 import { showToast } from '../../../components/common/Toast.js';
+import type { ReviewItem } from '../../../types/property.js';
 
 interface Room {
   id: string;
@@ -28,6 +29,7 @@ interface PropertyDetail {
   images: { url: string }[];
   rooms: Room[];
   tenant: { fullName: string };
+  reviews: ReviewItem[];
 }
 
 function buildAvailabilityMap(room?: Room) {
@@ -335,6 +337,39 @@ export function PropertyDetailPage() {
                 </section>
               </>
             )}
+
+            {/* Reviews */}
+            <div className="pd-divider" />
+            <section className="pd-section">
+              <h2>Ulasan & Nilai</h2>
+              {property.reviews.length === 0 ? (
+                <p className="review-empty">Belum ada ulasan untuk properti ini.</p>
+              ) : (
+                <div className="review-list">
+                  {property.reviews.map((review) => (
+                    <div key={review.id} className="review-card">
+                      <div className="review-header">
+                        <div>
+                          <span className="review-author">{review.user.fullName}</span>
+                          <p className="review-meta">{new Date(review.createdAt).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                        </div>
+                        <span className="review-rating">{'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}</span>
+                      </div>
+                      <p className="review-comment">{review.comment}</p>
+                      {review.tenantReply && (
+                        <div className="review-reply-box">
+                          <div className="review-reply-label">Balasan dari pemilik</div>
+                          <p className="review-reply-text">{review.tenantReply}</p>
+                          {review.repliedAt && (
+                            <div className="review-reply-date">{new Date(review.repliedAt).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
           </div>
 
           {/* Right — sticky booking card */}
