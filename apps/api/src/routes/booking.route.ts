@@ -20,7 +20,7 @@ import { verifyToken, requireRole } from '../middlewares/auth.middleware.js';
 
 const bookingRouter = Router();
 
-bookingRouter.post('/bookings', createBookingHandler);
+bookingRouter.post('/bookings', verifyToken as any, requireRole('USER') as any, createBookingHandler as any);
 bookingRouter.get('/bookings', getAllBookingsHandler);
 bookingRouter.get('/bookings/:id', getBookingHandler);
 bookingRouter.get('/bookings/user/:userId', getUserBookingsHandler);

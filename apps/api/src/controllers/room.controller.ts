@@ -70,9 +70,13 @@ export async function deleteRoomHandler(req: AuthRequest, res: Response) {
 export async function getRoomsByPropertyHandler(req: Request, res: Response) {
   const propertyId = pickParam(req.params.propertyId);
   if (!propertyId) return badRequest(res, 'Property ID wajib diisi');
+  const page = Number(req.query.page) || 1;
+  const take = Number(req.query.take) || 10;
+  const sortBy = String(req.query.sortBy || 'createdAt');
+  const order = String(req.query.order || 'desc') as 'asc' | 'desc';
   try {
-    const rooms = await getRoomsByProperty(propertyId);
-    return res.json(rooms);
+    const result = await getRoomsByProperty(propertyId, page, take, sortBy, order);
+    return res.json(result);
   } catch (error) {
     return badRequest(res, (error as Error).message);
   }

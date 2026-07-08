@@ -82,6 +82,11 @@ export function BookingPage() {
       navigate('/login/user');
       return;
     }
+    if (user.role === 'tenant') {
+      showToast('Pemilik properti tidak dapat melakukan booking', 'error');
+      navigate('/');
+      return;
+    }
     
     if (!room || !checkIn || !checkOut || totalPrice === 0) {
       showToast('Mohon lengkapi tanggal check-in dan check-out', 'error');

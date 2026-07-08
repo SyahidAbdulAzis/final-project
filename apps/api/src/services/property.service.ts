@@ -164,7 +164,7 @@ export async function getPropertyById(id: string) {
           seasonalRates: true,
         },
       },
-      tenant: { select: { id: true, fullName: true, email: true } },
+      tenant: { select: { id: true, fullName: true, email: true, photoUrl: true } },
     },
   });
 }
