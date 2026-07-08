@@ -42,7 +42,26 @@ export function SeasonalTab({ selectedRoom }: Props) {
   useEffect(() => { if (selectedRoom) loadData(page); }, [selectedRoom, page]);
 
   const handleCreate = async () => {
-    if (!selectedRoom || !rateName || !rateStart || !rateEnd) return;
+    if (!selectedRoom || !rateName || !rateStart || !rateEnd) {
+      showToast('Semua field wajib diisi', 'error');
+      return;
+    }
+    const todayStr = new Date().toISOString().split('T')[0];
+    if (rateStart < todayStr) {
+      showToast('Tanggal mulai tidak boleh sebelum hari ini', 'error');
+      return;
+    }
+    if (rateEnd <= rateStart) {
+      showToast('Tanggal selesai harus setelah tanggal mulai', 'error');
+      return;
+    }
+    const overlap = seasonalRates.some((r) => {
+      return rateStart <= r.endDate && rateEnd >= r.startDate;
+    });
+    if (overlap) {
+      showToast('Rentang tanggal tumpang tindih dengan tarif yang sudah ada', 'error');
+      return;
+    }
     try {
       await createSeasonalRate({ roomId: selectedRoom, name: rateName, startDate: rateStart, endDate: rateEnd, adjustmentType: rateType, adjustmentValue: rateValue });
       loadData(page);

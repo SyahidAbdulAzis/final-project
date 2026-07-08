@@ -129,7 +129,7 @@ export async function getPropertyWithReviews(propertyId: string) {
           seasonalRates: true,
         },
       },
-      tenant: { select: { id: true, fullName: true, email: true } },
+      tenant: { select: { id: true, fullName: true, email: true, photoUrl: true } },
     },
   });
 

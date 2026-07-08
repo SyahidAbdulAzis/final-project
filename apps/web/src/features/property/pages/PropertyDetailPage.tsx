@@ -28,7 +28,7 @@ interface PropertyDetail {
   category: { name: string };
   images: { url: string }[];
   rooms: Room[];
-  tenant: { fullName: string };
+  tenant: { fullName: string; photoUrl?: string | null };
   reviews: ReviewItem[];
 }
 
@@ -141,10 +141,36 @@ export function PropertyDetailPage() {
     }
   };
 
+  const handleCheckInInput = (value: string) => {
+    if (!value) { setCheckIn(''); return; }
+    if (value < today) { showToast('Tanggal check-in tidak boleh sebelum hari ini', 'error'); return; }
+    if (selectedRoomObj && availabilityMap[value] === false) { showToast('Tanggal tersebut tidak tersedia', 'error'); return; }
+    setCheckIn(value);
+    setCheckOut('');
+  };
+
+  const handleCheckOutInput = (value: string) => {
+    if (!value) { setCheckOut(''); return; }
+    if (!checkIn) { showToast('Pilih tanggal check-in terlebih dahulu', 'error'); return; }
+    if (value <= checkIn) { showToast('Check-out harus setelah check-in', 'error'); return; }
+    if (selectedRoomObj) {
+      const between = getDatesInRange(checkIn, value);
+      if (between.some((d) => availabilityMap[d] === false)) {
+        showToast('Rentang tanggal mencakup tanggal yang tidak tersedia', 'error');
+        return;
+      }
+    }
+    setCheckOut(value);
+  };
+
   const handleCheckout = () => {
     if (!user) {
       showToast('Silakan login terlebih dahulu untuk melakukan booking', 'error');
       navigate('/login/user');
+      return;
+    }
+    if (user.role === 'tenant') {
+      showToast('Pemilik properti tidak dapat melakukan booking', 'error');
       return;
     }
     if (!selectedRoom) {
@@ -387,12 +413,12 @@ export function PropertyDetailPage() {
                 <div className="pd-booking-date-row">
                   <div className="pd-booking-date-cell pd-booking-date-cell--left">
                     <label>CHECK-IN</label>
-                    <input type="date" min={today} value={checkIn} onChange={(e) => setCheckIn(e.target.value)} />
+                    <input type="date" min={today} value={checkIn} onChange={(e) => handleCheckInInput(e.target.value)} />
                   </div>
                   <div className="pd-booking-date-divider" />
                   <div className="pd-booking-date-cell pd-booking-date-cell--right">
                     <label>CHECK-OUT</label>
-                    <input type="date" min={checkIn || today} value={checkOut} onChange={(e) => setCheckOut(e.target.value)} />
+                    <input type="date" min={checkIn || today} value={checkOut} onChange={(e) => handleCheckOutInput(e.target.value)} />
                   </div>
                 </div>
                 <div className="pd-booking-guest-row">
@@ -434,7 +460,9 @@ export function PropertyDetailPage() {
 
               <div className="pd-booking-host">
                 <div className="pd-booking-host-avatar">
-                  {property.tenant.fullName.charAt(0).toUpperCase()}
+                  {property.tenant.photoUrl
+                    ? <img src={property.tenant.photoUrl} alt={property.tenant.fullName} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+                    : property.tenant.fullName.charAt(0).toUpperCase()}
                 </div>
                 <div>
                   <span className="pd-booking-host-label">Tuan Rumah</span>

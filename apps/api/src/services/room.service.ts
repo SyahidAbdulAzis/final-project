@@ -65,10 +65,24 @@ export async function deleteRoom(id: string, tenantId: string) {
   return await prisma.room.delete({ where: { id } });
 }
 
-export async function getRoomsByProperty(propertyId: string) {
-  return await prisma.room.findMany({
-    where: { propertyId },
-    include: { availabilities: true, seasonalRates: true },
-    orderBy: { createdAt: 'desc' },
-  });
+export async function getRoomsByProperty(
+  propertyId: string,
+  page = 1,
+  take = 10,
+  sortBy = 'createdAt',
+  order: 'asc' | 'desc' = 'desc',
+) {
+  const skip = (page - 1) * take;
+  const validSort = ['createdAt', 'name', 'basePrice'].includes(sortBy) ? sortBy : 'createdAt';
+  const [data, total] = await Promise.all([
+    prisma.room.findMany({
+      where: { propertyId },
+      include: { availabilities: true, seasonalRates: true },
+      orderBy: { [validSort]: order },
+      skip,
+      take,
+    }),
+    prisma.room.count({ where: { propertyId } }),
+  ]);
+  return { data, meta: { page, take, total, totalPages: Math.max(1, Math.ceil(total / take)) } };
 }
