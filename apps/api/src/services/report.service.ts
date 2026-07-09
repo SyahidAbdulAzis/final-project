@@ -1,6 +1,6 @@
 import prisma from '../lib/prisma.js';
 
-export interface SalesReportData {
+interface SalesReportData {
   propertyId: string;
   propertyName: string;
   totalSales: number;
@@ -17,68 +17,55 @@ export interface SalesReportData {
   }>;
 }
 
+export { type SalesReportData };
+
+export function buildTenantWhere(tenantId: string, startDate?: Date, endDate?: Date) {
+  const where: any = {
+    room: { property: { tenantId } },
+    status: 'DIKONFIRMASI',
+  };
+
+  if (startDate && endDate) {
+    where.createdAt = { gte: startDate, lte: endDate };
+  }
+
+  return where;
+}
+
+const bookingInclude = {
+  room: { include: { property: true } },
+  user: { select: { id: true, fullName: true, email: true } },
+};
+
 export async function getSalesReportByProperty(
   tenantId: string,
   startDate?: Date,
   endDate?: Date,
   sortBy?: 'date' | 'totalSales'
 ): Promise<SalesReportData[]> {
-  const where: any = {
-    room: {
-      property: {
-        tenantId,
-      },
-    },
-    status: 'DIKONFIRMASI',
-  };
-
-  if (startDate && endDate) {
-    where.createdAt = {
-      gte: startDate,
-      lte: endDate,
-    };
-  }
+  const where = buildTenantWhere(tenantId, startDate, endDate);
 
   const bookings = await prisma.booking.findMany({
     where,
-    include: {
-      room: {
-        include: {
-          property: true,
-        },
-      },
-      user: {
-        select: {
-          id: true,
-          fullName: true,
-          email: true,
-        },
-      },
-    },
+    include: bookingInclude,
     orderBy: sortBy === 'totalSales' ? { totalPrice: 'desc' } : { createdAt: 'desc' },
   });
 
-  // Group by property
   const propertyMap = new Map<string, SalesReportData>();
-
   bookings.forEach((booking: any) => {
     const propertyId = booking.room.property.id;
     const propertyName = booking.room.property.name;
 
     if (!propertyMap.has(propertyId)) {
       propertyMap.set(propertyId, {
-        propertyId,
-        propertyName,
-        totalSales: 0,
-        transactionCount: 0,
-        bookings: [],
+        propertyId, propertyName, totalSales: 0, transactionCount: 0, bookings: [],
       });
     }
 
-    const propertyData = propertyMap.get(propertyId)!;
-    propertyData.totalSales += booking.totalPrice;
-    propertyData.transactionCount += 1;
-    propertyData.bookings.push({
+    const entry = propertyMap.get(propertyId)!;
+    entry.totalSales += booking.totalPrice;
+    entry.transactionCount += 1;
+    entry.bookings.push({
       id: booking.id,
       userId: booking.userId,
       userName: booking.user.fullName,
@@ -98,60 +85,16 @@ export async function getSalesReportByUser(
   startDate?: Date,
   endDate?: Date,
   sortBy?: 'date' | 'totalSales'
-): Promise<Array<{
-  userId: string;
-  userName: string;
-  userEmail: string;
-  totalSales: number;
-  transactionCount: number;
-  bookings: Array<{
-    id: string;
-    propertyName: string;
-    checkIn: Date;
-    checkOut: Date;
-    totalPrice: number;
-    status: string;
-    createdAt: Date;
-  }>;
-}>> {
-  const where: any = {
-    room: {
-      property: {
-        tenantId,
-      },
-    },
-    status: 'DIKONFIRMASI',
-  };
-
-  if (startDate && endDate) {
-    where.createdAt = {
-      gte: startDate,
-      lte: endDate,
-    };
-  }
+) {
+  const where = buildTenantWhere(tenantId, startDate, endDate);
 
   const bookings = await prisma.booking.findMany({
     where,
-    include: {
-      room: {
-        include: {
-          property: true,
-        },
-      },
-      user: {
-        select: {
-          id: true,
-          fullName: true,
-          email: true,
-        },
-      },
-    },
+    include: bookingInclude,
     orderBy: sortBy === 'totalSales' ? { totalPrice: 'desc' } : { createdAt: 'desc' },
   });
 
-  // Group by user
   const userMap = new Map<string, any>();
-
   bookings.forEach((booking: any) => {
     const userId = booking.userId;
     const userName = booking.user.fullName;
@@ -159,19 +102,14 @@ export async function getSalesReportByUser(
 
     if (!userMap.has(userId)) {
       userMap.set(userId, {
-        userId,
-        userName,
-        userEmail,
-        totalSales: 0,
-        transactionCount: 0,
-        bookings: [],
+        userId, userName, userEmail, totalSales: 0, transactionCount: 0, bookings: [],
       });
     }
 
-    const userData = userMap.get(userId)!;
-    userData.totalSales += booking.totalPrice;
-    userData.transactionCount += 1;
-    userData.bookings.push({
+    const entry = userMap.get(userId)!;
+    entry.totalSales += booking.totalPrice;
+    entry.transactionCount += 1;
+    entry.bookings.push({
       id: booking.id,
       propertyName: booking.room.property.name,
       checkIn: booking.checkIn,
@@ -190,48 +128,12 @@ export async function getSalesReportByTransaction(
   startDate?: Date,
   endDate?: Date,
   sortBy?: 'date' | 'totalSales'
-): Promise<Array<{
-  id: string;
-  propertyName: string;
-  userName: string;
-  userEmail: string;
-  checkIn: Date;
-  checkOut: Date;
-  totalPrice: number;
-  status: string;
-  createdAt: Date;
-}>> {
-  const where: any = {
-    room: {
-      property: {
-        tenantId,
-      },
-    },
-    status: 'DIKONFIRMASI',
-  };
-
-  if (startDate && endDate) {
-    where.createdAt = {
-      gte: startDate,
-      lte: endDate,
-    };
-  }
+) {
+  const where = buildTenantWhere(tenantId, startDate, endDate);
 
   const bookings = await prisma.booking.findMany({
     where,
-    include: {
-      room: {
-        include: {
-          property: true,
-        },
-      },
-      user: {
-        select: {
-          fullName: true,
-          email: true,
-        },
-      },
-    },
+    include: bookingInclude,
     orderBy: sortBy === 'totalSales' ? { totalPrice: 'desc' } : { createdAt: 'desc' },
   });
 
@@ -245,154 +147,5 @@ export async function getSalesReportByTransaction(
     totalPrice: booking.totalPrice,
     status: booking.status,
     createdAt: booking.createdAt,
-  }));
-}
-
-export interface PropertyAvailabilityData {
-  propertyId: string;
-  propertyName: string;
-  propertyCity: string;
-  rooms: Array<{
-    roomId: string;
-    roomName: string;
-    bookings: Array<{
-      id: string;
-      checkIn: Date;
-      checkOut: Date;
-      status: string;
-    }>;
-  }>;
-}
-
-export interface SalesChartItem {
-  propertyId: string;
-  propertyName: string;
-  totalSales: number;
-  percentage: number;
-}
-
-export async function getSalesChartData(
-  tenantId: string,
-  startDate?: Date,
-  endDate?: Date,
-): Promise<SalesChartItem[]> {
-  const where: any = {
-    room: {
-      property: {
-        tenantId,
-      },
-    },
-    status: 'DIKONFIRMASI',
-  };
-
-  if (startDate && endDate) {
-    where.createdAt = {
-      gte: startDate,
-      lte: endDate,
-    };
-  }
-
-  const bookings = await prisma.booking.findMany({
-    where,
-    include: {
-      room: {
-        include: {
-          property: {
-            select: { id: true, name: true },
-          },
-        },
-      },
-    },
-  });
-
-  const propertyMap = new Map<string, { name: string; totalSales: number }>();
-  let grandTotal = 0;
-
-  for (const booking of bookings) {
-    const propertyId = (booking.room as any).property.id;
-    const propertyName = (booking.room as any).property.name;
-
-    if (!propertyMap.has(propertyId)) {
-      propertyMap.set(propertyId, { name: propertyName, totalSales: 0 });
-    }
-    propertyMap.get(propertyId)!.totalSales += booking.totalPrice;
-    grandTotal += booking.totalPrice;
-  }
-
-  const result: SalesChartItem[] = [];
-  for (const [propertyId, data] of propertyMap.entries()) {
-    result.push({
-      propertyId,
-      propertyName: data.name,
-      totalSales: data.totalSales,
-      percentage: grandTotal > 0 ? parseFloat(((data.totalSales / grandTotal) * 100).toFixed(1)) : 0,
-    });
-  }
-
-  result.sort((a, b) => b.totalSales - a.totalSales);
-
-  return result;
-}
-
-export async function getPropertyAvailabilityCalendar(
-  tenantId: string,
-  startDate: Date,
-  endDate: Date
-): Promise<PropertyAvailabilityData[]> {
-  const properties = await prisma.property.findMany({
-    where: {
-      tenantId,
-    },
-    include: {
-      rooms: {
-        include: {
-          bookings: {
-            where: {
-              OR: [
-                {
-                  checkIn: {
-                    gte: startDate,
-                    lte: endDate,
-                  },
-                },
-                {
-                  checkOut: {
-                    gte: startDate,
-                    lte: endDate,
-                  },
-                },
-                {
-                  checkIn: {
-                    lte: startDate,
-                  },
-                  checkOut: {
-                    gte: endDate,
-                  },
-                },
-              ],
-            },
-            orderBy: {
-              checkIn: 'asc',
-            },
-          },
-        },
-      },
-    },
-  });
-
-  return properties.map((property: any) => ({
-    propertyId: property.id,
-    propertyName: property.name,
-    propertyCity: property.city,
-    rooms: property.rooms.map((room: any) => ({
-      roomId: room.id,
-      roomName: room.name,
-      bookings: room.bookings.map((booking: any) => ({
-        id: booking.id,
-        checkIn: booking.checkIn,
-        checkOut: booking.checkOut,
-        status: booking.status,
-      })),
-    })),
   }));
 }

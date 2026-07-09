@@ -3,9 +3,11 @@ import {
   getSalesReportByProperty,
   getSalesReportByUser,
   getSalesReportByTransaction,
+} from '../services/report.service.js';
+import {
   getSalesChartData,
   getPropertyAvailabilityCalendar,
-} from '../services/report.service.js';
+} from '../services/report-visual.service.js';
 
 function pickParam(param: any) {
   if (!param) return null;
