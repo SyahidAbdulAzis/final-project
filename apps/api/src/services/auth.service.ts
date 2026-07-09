@@ -53,9 +53,21 @@ async function invalidateToken(token: string) {
   });
 }
 
-function hideSecret(account: any) {
+function hideSecret<T extends { passwordHash?: string | null }>(account: T): Omit<T, 'passwordHash'> {
   const { passwordHash, ...safe } = account;
   return safe;
+}
+
+function signJwt(account: { id: string; email: string; role: string }) {
+  return jwt.sign(
+    { id: account.id, email: account.email, role: account.role },
+    process.env.JWT_SECRET || 'secret',
+    { expiresIn: '7d' }
+  );
+}
+
+async function hashPassword(password: string) {
+  return await bcrypt.hash(password, 10);
 }
 
 export async function registerAccount(email: string, role: Role) {
@@ -67,7 +79,7 @@ export async function registerAccount(email: string, role: Role) {
       email: email.toLowerCase(),
       role: toPrismaRole(role),
       isVerified: false,
-      passwordHash: '',
+      passwordHash: null,
       fullName: '',
       photoUrl: ''
     }
@@ -81,20 +93,14 @@ export async function verifyAccount(token: string, password: string) {
   const account = await findAccount(record.email);
   if (!account) throw new Error('Akun tidak ditemukan');
 
-  const passwordHash = await bcrypt.hash(password, 10);
   await prisma.user.update({
     where: { email: account.email },
-    data: { isVerified: true, passwordHash }
+    data: { isVerified: true, passwordHash: await hashPassword(password) }
   });
 
   await invalidateToken(token);
   const updated = await findAccount(account.email);
-  const jwtToken = jwt.sign(
-    { id: updated!.id, email: updated!.email, role: updated!.role },
-    process.env.JWT_SECRET || 'secret',
-    { expiresIn: '7d' }
-  );
-  return { token: jwtToken, user: hideSecret(updated) };
+  return { token: signJwt(updated!), user: hideSecret(updated!) };
 }
 
 export async function loginAccount(email: string, role: Role, password: string) {
@@ -102,17 +108,9 @@ export async function loginAccount(email: string, role: Role, password: string) 
   if (!account || account.role !== toPrismaRole(role)) throw new Error('Akun tidak ditemukan');
   if (!account.isVerified) throw new Error('Akun belum terverifikasi');
   if (!account.passwordHash) throw new Error('Password belum diatur');
+  if (!(await bcrypt.compare(password, account.passwordHash))) throw new Error('Email atau password salah');
 
-  const valid = await bcrypt.compare(password, account.passwordHash);
-  if (!valid) throw new Error('Email atau password salah');
-
-  const token = jwt.sign(
-    { id: account.id, email: account.email, role: account.role },
-    process.env.JWT_SECRET || 'secret',
-    { expiresIn: '7d' }
-  );
-
-  return { token, user: hideSecret(account) };
+  return { token: signJwt(account), user: hideSecret(account) };
 }
 
 export async function resendVerification(email: string) {
@@ -125,6 +123,7 @@ export async function resendVerification(email: string) {
 export async function requestResetPassword(email: string) {
   const account = await findAccount(email);
   if (!account || !account.isVerified) throw new Error('Akun tidak valid');
+  if (!account.passwordHash) throw new Error('Reset password hanya untuk akun registrasi email');
   return { token: await createToken(email, 'reset') };
 }
 
@@ -133,7 +132,7 @@ export async function resetPassword(token: string, password: string) {
   const account = await findAccount(record.email);
   if (!account) throw new Error('Akun tidak ditemukan');
 
-  const passwordHash = await bcrypt.hash(password, 10);
+  const passwordHash = await hashPassword(password);
   await prisma.user.update({
     where: { email: account.email },
     data: { passwordHash }
@@ -149,27 +148,29 @@ export async function getProfile(email: string) {
   return hideSecret(account);
 }
 
+function buildProfileData(fullName?: string, photoUrl?: string) {
+  const data: { fullName?: string; photoUrl?: string } = {};
+  if (fullName !== undefined) data.fullName = fullName;
+  if (photoUrl !== undefined) data.photoUrl = photoUrl;
+  return data;
+}
+
+async function handleEmailChange(account: { email: string }, newEmail: string) {
+  if (newEmail.toLowerCase() === account.email.toLowerCase()) return null;
+  const existing = await findAccount(newEmail);
+  if (existing) throw new Error('Email sudah digunakan oleh akun lain');
+  return await createToken(newEmail.toLowerCase(), 'verify');
+}
+
 export async function updateProfile(email: string, fullName?: string, photoUrl?: string, newEmail?: string) {
   const account = await findAccount(email);
   if (!account) throw new Error('Akun tidak ditemukan');
 
-  const data: { fullName?: string; photoUrl?: string; email?: string; isVerified?: boolean } = {};
-  if (fullName !== undefined) data.fullName = fullName;
-  if (photoUrl !== undefined) data.photoUrl = photoUrl;
+  const data: { fullName?: string; photoUrl?: string; email?: string; isVerified?: boolean } = buildProfileData(fullName, photoUrl);
+  const verificationToken = newEmail ? await handleEmailChange(account, newEmail) : null;
+  if (verificationToken) { data.email = newEmail!.toLowerCase(); data.isVerified = false; }
 
-  let verificationToken: string | null = null;
-  if (newEmail && newEmail.toLowerCase() !== account.email.toLowerCase()) {
-    const existing = await findAccount(newEmail);
-    if (existing) throw new Error('Email sudah digunakan oleh akun lain');
-    data.email = newEmail.toLowerCase();
-    data.isVerified = false;
-    verificationToken = await createToken(newEmail.toLowerCase(), 'verify');
-  }
-
-  const updated = await prisma.user.update({
-    where: { email: email.toLowerCase() },
-    data
-  });
+  const updated = await prisma.user.update({ where: { email: email.toLowerCase() }, data });
   return { ...hideSecret(updated), verificationToken };
 }
 
@@ -181,10 +182,10 @@ export async function changePassword(email: string, oldPassword: string, newPass
   const valid = await bcrypt.compare(oldPassword, account.passwordHash);
   if (!valid) throw new Error('Password lama tidak cocok');
 
-  const passwordHash = await bcrypt.hash(newPassword, 10);
+  const passwordHash = await hashPassword(newPassword);
   await prisma.user.update({
     where: { email: account.email },
     data: { passwordHash }
   });
-  return hideSecret(await findAccount(account.email));
+  return hideSecret((await findAccount(account.email))!);
 }

@@ -476,14 +476,11 @@ input:-webkit-autofill:active {
    ======================== */
 @layer components {
   .auth-layout {
-    @apply flex flex-1 items-center justify-center px-6 py-10 relative overflow-hidden;
-    background: linear-gradient(160deg, #faf9ff 0%, #fff0f3 55%, #fafeff 100%);
+    @apply flex flex-1 items-center justify-center px-6 py-10 relative overflow-hidden bg-[linear-gradient(160deg,#faf9ff_0%,#fff0f3_55%,#fafeff_100%)];
   }
 
   .auth-card {
-    @apply w-full bg-white rounded-[28px] px-10 pt-12 pb-11 relative z-10 overflow-hidden;
-    max-width: 440px;
-    box-shadow: 0 24px 72px rgba(0,0,0,0.10), 0 4px 16px rgba(0,0,0,0.05);
+    @apply w-full max-w-[440px] bg-white rounded-[28px] px-10 pt-12 pb-11 relative z-10 overflow-hidden shadow-[0_24px_72px_rgba(0,0,0,0.10),0_4px_16px_rgba(0,0,0,0.05)];
   }
 
   .auth-brand-mark {
@@ -491,9 +488,7 @@ input:-webkit-autofill:active {
   }
 
   .auth-brand-logo {
-    @apply w-12 h-12 rounded-2xl flex items-center justify-center mb-2.5;
-    background: linear-gradient(135deg, #ff385c, #c0143b);
-    box-shadow: 0 8px 24px rgba(255,56,92,0.28);
+    @apply w-12 h-12 rounded-2xl flex items-center justify-center mb-2.5 bg-[linear-gradient(135deg,#ff385c,#c0143b)] shadow-[0_8px_24px_rgba(255,56,92,0.28)];
   }
 
   .auth-brand-logo svg { @apply text-white; }
@@ -627,36 +622,36 @@ input:-webkit-autofill:active {
    PROFILE PAGE — Tailwind
    ============================================ */
 @layer components {
-  .prf-page { @apply w-full flex-1; background: var(--bg); }
-  .prf-banner { @apply w-full h-[200px] relative overflow-hidden; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 35%, #0f3460 65%, #e71d45 100%); }
-  .prf-banner-overlay { @apply absolute inset-0; background: radial-gradient(ellipse at 70% 50%, rgba(255,56,92,0.25) 0%, transparent 65%); }
-  .prf-api-error { @apply max-w-[1360px] mx-auto px-7; width: calc(100% - 56px); }
-  .profile-wide { @apply w-full flex-1; background: var(--bg); }
-  .pro-toast { @apply fixed top-5 left-1/2 -translate-x-1/2 z-50 flex items-center justify-center gap-2 w-fit px-5 py-2.5 rounded-xl text-[0.85rem] font-semibold; box-shadow: 0 4px 16px rgba(0,0,0,0.12); animation: slideDown 0.3s ease; }
-  .pro-toast.success { @apply bg-[#e6f6ee] text-[#0d6f3f]; border: 1px solid #b8e8cf; }
-  .pw-layout { @apply max-w-[1360px] mx-auto px-7 pb-20 grid items-start gap-7 relative; margin-top: -72px; width: calc(100% - 56px); grid-template-columns: 300px 1fr; }
+  .prf-page { @apply w-full flex-1 bg-(--bg); }
+  .prf-banner { @apply w-full h-[200px] relative overflow-hidden bg-[linear-gradient(135deg,#1a1a2e_0%,#16213e_35%,#0f3460_65%,#e71d45_100%)]; }
+  .prf-banner-overlay { @apply absolute inset-0 bg-[radial-gradient(ellipse_at_70%_50%,rgba(255,56,92,0.25)_0%,transparent_65%)]; }
+  .prf-api-error { @apply max-w-[1360px] mx-auto px-7 w-[calc(100%-56px)]; }
+  .profile-wide { @apply w-full flex-1 bg-(--bg); }
+  .pro-toast { @apply fixed top-5 left-1/2 -translate-x-1/2 z-50 flex items-center justify-center gap-2 w-fit px-5 py-2.5 rounded-xl text-[0.85rem] font-semibold shadow-[0_4px_16px_rgba(0,0,0,0.12)]; animation: slideDown 0.3s ease; }
+  .pro-toast.success { @apply bg-[#e6f6ee] text-[#0d6f3f] border border-[#b8e8cf]; }
+  .pw-layout { @apply max-w-[1360px] mx-auto px-7 pb-20 grid items-start gap-7 relative -mt-[72px] w-[calc(100%-56px)] grid-cols-[300px_1fr]; }
   .pw-sidebar { @apply sticky top-[92px] self-start h-fit; }
-  .pw-user-card { @apply flex flex-col items-center text-center gap-0 rounded-[24px] px-6 py-7; background: var(--card); border: 1px solid var(--line); box-shadow: 0 8px 32px rgba(0,0,0,0.10), 0 2px 8px rgba(0,0,0,0.04); }
+  .pw-user-card { @apply flex flex-col items-center text-center gap-0 rounded-[24px] px-6 py-7 bg-(--card) border border-(--line) shadow-[0_8px_32px_rgba(0,0,0,0.10),0_2px_8px_rgba(0,0,0,0.04)]; }
   .pw-avatar-ring { @apply relative w-[116px] h-[116px] mb-3.5; }
-  .pw-avatar { @apply relative z-10 w-[108px] h-[108px] rounded-full overflow-hidden m-1 box-border; background: rgba(255,56,92,0.08); border: 3px solid #fff; }
+  .pw-avatar { @apply relative z-10 w-[108px] h-[108px] rounded-full overflow-hidden m-1 box-border bg-[rgba(255,56,92,0.08)] border-[3px_solid_#fff]; }
   .pw-avatar--lg { @apply w-[108px] h-[108px]; }
   .pw-avatar img { @apply w-full h-full rounded-full object-cover block; }
-  .pw-avatar-fallback { @apply w-full h-full rounded-full flex items-center justify-center text-[2.6rem] font-extrabold; background: linear-gradient(135deg, rgba(255,56,92,0.15), rgba(15,52,96,0.1)); color: var(--primary); }
-  .pw-avatar-edit { @apply absolute bottom-0.5 right-0.5 z-20 w-[30px] h-[30px] rounded-full bg-white flex items-center justify-center cursor-pointer transition-all duration-150; border: 1.5px solid #e0e0e0; box-shadow: 0 2px 8px rgba(0,0,0,0.12); color: var(--text); }
-  .pw-avatar-edit:hover { @apply text-white; background: var(--primary); border-color: var(--primary); }
+  .pw-avatar-fallback { @apply w-full h-full rounded-full flex items-center justify-center text-[2.6rem] font-extrabold bg-[linear-gradient(135deg,rgba(255,56,92,0.15),rgba(15,52,96,0.1))] text-(--primary); }
+  .pw-avatar-edit { @apply absolute bottom-0.5 right-0.5 z-20 w-[30px] h-[30px] rounded-full bg-white flex items-center justify-center cursor-pointer transition-all duration-150 border-[1.5px_solid_#e0e0e0] shadow-[0_2px_8px_rgba(0,0,0,0.12)] text-(--text); }
+  .pw-avatar-edit:hover { @apply text-white bg-(--primary) border-(--primary); }
   .pw-avatar-btn { @apply hidden; }
-  .pw-user-name { @apply text-[1.2rem] font-extrabold m-0 mb-2; color: var(--text); letter-spacing: -0.3px; }
-  .pw-info-rows { @apply w-full mt-3 flex flex-col gap-0; border-top: 1px solid #f0f0f0; }
-  .pw-info-row { @apply flex items-center gap-2.5 px-1 py-[11px] text-[0.83rem]; color: var(--muted); border-bottom: 1px solid #f5f5f5; }
+  .pw-user-name { @apply text-[1.2rem] font-extrabold m-0 mb-2 text-(--text) tracking-[-0.3px]; }
+  .pw-info-rows { @apply w-full mt-3 flex flex-col gap-0 border-t border-[#f0f0f0]; }
+  .pw-info-row { @apply flex items-center gap-2.5 px-1 py-[11px] text-[0.83rem] text-(--muted) border-b border-[#f5f5f5]; }
   .pw-info-row svg { @apply shrink-0 text-[#bbb]; }
   .pw-info-row span { @apply break-all text-left; }
-  .pw-divider { @apply w-full h-px mt-4; background: #ebebeb; }
+  .pw-divider { @apply w-full h-px mt-4 bg-[#ebebeb]; }
   .pw-verify-dot { @apply inline-flex items-center justify-center w-5 h-5 rounded-full shrink-0; }
   .pw-verify-dot.ok { @apply bg-[#e6f6ee] text-[#0d6f3f]; }
   .pw-verify-dot.warn { @apply bg-[#fef5e6] text-[#8a5e00]; }
-  .pw-user-email { @apply text-[0.8rem] m-0 leading-tight; color: var(--muted); }
+  .pw-user-email { @apply text-[0.8rem] m-0 leading-tight text-(--muted); }
   .pw-user-badges { @apply flex items-center justify-center gap-1.5 mt-0.5 flex-wrap; }
-  .pw-role { @apply text-[0.72rem] font-bold px-3 py-1 rounded-full uppercase; letter-spacing: 0.4px; }
+  .pw-role { @apply text-[0.72rem] font-bold px-3 py-1 rounded-full uppercase tracking-[0.4px]; }
   .pw-role.user { @apply bg-[#e8f4fd] text-[#0a6ebd]; }
   .pw-role.tenant { @apply bg-[#fdf2e8] text-[#b8590a]; }
   .pw-verify { @apply inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[0.75rem] font-semibold; }
@@ -667,38 +662,38 @@ input:-webkit-autofill:active {
   .pw-verify-badge.ok { @apply bg-[#e6f6ee] text-[#0d6f3f]; }
   .pw-verify-badge.warn { @apply bg-[#fef5e6] text-[#8a5e00]; }
   .pw-verify-badge .pw-verify-dot { @apply w-4 h-4; }
-  .pw-resend { @apply bg-transparent border-none text-[0.78rem] font-semibold cursor-pointer underline underline-offset-2 mt-0.5 p-0 leading-tight; color: var(--primary); font-family: inherit; }
-  .pw-resend:hover { color: var(--primary-dark); }
+  .pw-resend { @apply bg-transparent border-none text-[0.78rem] font-semibold cursor-pointer underline underline-offset-2 mt-0.5 p-0 leading-tight text-(--primary) font-[inherit]; }
+  .pw-resend:hover { @apply text-(--primary-dark); }
   .pw-main { @apply flex flex-col gap-6; }
-  .pw-section { @apply border rounded-[24px] px-9 py-8 mb-6; background: var(--card); border-color: var(--line); box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+  .pw-section { @apply border rounded-[24px] px-9 py-8 mb-6 bg-(--card) border-(--line) shadow-[0_2px_10px_rgba(0,0,0,0.05)]; }
   .pw-section:last-of-type { @apply mb-0; }
-  .pw-section-head { @apply flex items-center justify-between mb-7 pb-5; border-bottom: 1px solid #f0f0f0; }
+  .pw-section-head { @apply flex items-center justify-between mb-7 pb-5 border-b border-[#f0f0f0]; }
   .pw-section-title { @apply flex items-center gap-3; }
-  .pw-section-icon { @apply w-[38px] h-[38px] rounded-xl flex items-center justify-center shrink-0; background: rgba(255,56,92,0.08); color: var(--primary); }
-  .pw-section-head h2 { @apply text-[1.2rem] font-extrabold m-0; color: var(--text); letter-spacing: -0.3px; }
-  .pw-edit { @apply inline-flex items-center gap-1.5 py-2 px-4 border rounded-full text-[0.85rem] font-bold cursor-pointer transition-colors duration-200; border-color: var(--line); background: var(--card); color: var(--text); font-family: inherit; }
-  .pw-edit:hover { border-color: var(--text); background: var(--bg); }
+  .pw-section-icon { @apply w-[38px] h-[38px] rounded-xl flex items-center justify-center shrink-0 bg-[rgba(255,56,92,0.08)] text-(--primary); }
+  .pw-section-head h2 { @apply text-[1.2rem] font-extrabold m-0 text-(--text) tracking-[-0.3px]; }
+  .pw-edit { @apply inline-flex items-center gap-1.5 py-2 px-4 border rounded-full text-[0.85rem] font-bold cursor-pointer transition-colors duration-200 border-(--line) bg-(--card) text-(--text) font-[inherit]; }
+  .pw-edit:hover { @apply border-(--text) bg-(--bg); }
   .pw-fields { @apply flex flex-col gap-0.5; }
-  .pw-field { @apply flex items-baseline py-4; border-bottom: 1px solid #f5f5f5; }
+  .pw-field { @apply flex items-baseline py-4 border-b border-[#f5f5f5]; }
   .pw-field:last-child { @apply border-b-0; }
-  .pw-field-label { @apply w-[200px] shrink-0 text-[0.85rem] font-bold; color: var(--muted); }
-  .pw-field-value { @apply flex-1 text-[0.95rem] font-medium wrap-break-word; color: var(--text); }
+  .pw-field-label { @apply w-[200px] shrink-0 text-[0.85rem] font-bold text-(--muted); }
+  .pw-field-value { @apply flex-1 text-[0.95rem] font-medium wrap-break-word text-(--text); }
   .pw-form { @apply flex flex-col gap-4; }
   .pw-form-row { @apply grid grid-cols-2 gap-4; }
   .pw-input-group { @apply flex flex-col gap-1.5; }
   .pw-input-group.full { @apply col-span-2; }
-  .pw-input-group label { @apply text-[0.85rem] font-bold; color: var(--text); }
-  .pw-input-group input { @apply w-full py-3 px-[18px] border rounded-full text-[0.95rem] bg-white outline-none transition-all duration-200; border-color: var(--line); color: var(--text); font-family: inherit; }
-  .pw-input-group input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(255,56,92,0.1); }
+  .pw-input-group label { @apply text-[0.85rem] font-bold text-(--text); }
+  .pw-input-group input { @apply w-full py-3 px-[18px] border rounded-full text-[0.95rem] bg-white outline-none transition-all duration-200 border-(--line) text-(--text) font-[inherit]; }
+  .pw-input-group input:focus { @apply border-(--primary) shadow-[0_0_0_3px_rgba(255,56,92,0.1)]; }
   .pw-input-group input::placeholder { @apply text-[#bbb]; }
-  .pw-hint { @apply text-[0.85rem] m-0; color: var(--muted); }
-  .pw-file-btn { @apply inline-flex items-center gap-2 py-2.5 px-[18px] rounded-full text-[0.88rem] font-semibold cursor-pointer w-fit transition-colors duration-200; border: 1px dashed var(--line); background: var(--bg); color: var(--text); font-family: inherit; }
-  .pw-file-btn:hover { border-color: var(--primary); background: rgba(255,56,92,0.04); }
+  .pw-hint { @apply text-[0.85rem] m-0 text-(--muted); }
+  .pw-file-btn { @apply inline-flex items-center gap-2 py-2.5 px-[18px] rounded-full text-[0.88rem] font-semibold cursor-pointer w-fit transition-colors duration-200 border border-dashed border-(--line) bg-(--bg) text-(--text) font-[inherit]; }
+  .pw-file-btn:hover { @apply border-(--primary) bg-[rgba(255,56,92,0.04)]; }
   .pw-actions { @apply flex gap-3 mt-1; }
   .pw-actions .btn-secondary,
   .pw-actions .btn-primary { @apply w-auto py-3.5 px-7 rounded-full; }
-  .pw-logout { @apply flex items-center justify-center gap-2 w-full mt-4 py-2.5 px-3.5 rounded-full text-[0.88rem] font-bold cursor-pointer transition-all duration-200; border: 1px solid #ffcdd2; background: var(--card); color: #c53030; font-family: inherit; }
-  .pw-logout:hover { @apply scale-[1.03]; background: #fff5f5; border-color: #ef9a9a; }
+  .pw-logout { @apply flex items-center justify-center gap-2 w-full mt-4 py-2.5 px-3.5 rounded-full text-[0.88rem] font-bold cursor-pointer transition-all duration-200 border border-[#ffcdd2] bg-(--card) text-[#c53030] font-[inherit]; }
+  .pw-logout:hover { @apply scale-[1.03] bg-[#fff5f5] border-[#ef9a9a]; }
 }
 
 /* Pseudo-element — content:'' tetap raw */
@@ -747,7 +742,7 @@ input:-webkit-autofill:active {
   .tenant-sidebar { @apply w-[270px] sticky top-0 left-0 shrink-0 bg-(--card) border-r border-(--line) min-h-[calc(100vh-120px)]; }
   .tenant-sidebar-header { @apply p-0 border-b border-(--line); }
   .tenant-sidebar-brand { @apply flex items-center gap-3 p-5; }
-  .tenant-sidebar-icon { @apply w-[38px] h-[38px] rounded-xl flex items-center justify-center shrink-0 text-white; background: linear-gradient(135deg, #ff385c, #c0143b); box-shadow: 0 4px 12px rgba(255,56,92,0.25); }
+  .tenant-sidebar-icon { @apply w-[38px] h-[38px] rounded-xl flex items-center justify-center shrink-0 text-white bg-[linear-gradient(135deg,#ff385c,#c0143b)] shadow-[0_4px_12px_rgba(255,56,92,0.25)]; }
   .tenant-sidebar-header h3 { @apply text-[0.9rem] font-bold m-0 mb-0.5 text-(--text); }
   .tenant-sidebar-header p { @apply text-[0.75rem] m-0 text-(--muted); }
   .tenant-nav { @apply flex flex-col py-2.5 px-3 gap-0.5; }
@@ -768,9 +763,9 @@ input:-webkit-autofill:active {
   .tenant-page-header p { @apply text-[0.85rem] m-0 text-(--muted); }
 
   /* Stat Cards */
-  .tenant-stats-grid { @apply grid gap-5 mb-7; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+  .tenant-stats-grid { @apply grid gap-5 mb-7 grid-cols-[repeat(auto-fill,minmax(220px,1fr))]; }
   .tenant-stat-card { @apply flex flex-col gap-3 p-6 rounded-[24px] border transition-all duration-200 bg-(--card) border-(--line) shadow-[0_2px_10px_rgba(0,0,0,0.05)]; }
-  .tenant-stat-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.08); @apply translate-y-[-0.5]; }
+  .tenant-stat-card:hover { @apply translate-y-[-0.5] shadow-[0_4px_20px_rgba(0,0,0,0.08)]; }
   .tenant-stat-icon { @apply w-12 h-12 rounded-[14px] flex items-center justify-center shrink-0; }
   .tenant-stat-icon.red { @apply bg-[#fff0f2] text-[#ff385c]; }
   .tenant-stat-icon.blue { @apply bg-[#eff6ff] text-[#3b82f6]; }
@@ -791,7 +786,7 @@ input:-webkit-autofill:active {
   .tenant-table tr:hover td { @apply bg-(--bg); }
 
   /* Buttons */
-  .btn-tenant { @apply inline-flex items-center gap-1.5 py-2.5 px-[18px] rounded-full text-[0.85rem] font-bold border-0 cursor-pointer transition-all duration-150; font-family: inherit; }
+  .btn-tenant { @apply inline-flex items-center gap-1.5 py-2.5 px-[18px] rounded-full text-[0.85rem] font-bold border-0 cursor-pointer transition-all duration-150 font-[inherit]; }
   .btn-tenant-primary { @apply text-white bg-linear-to-r from-(--primary) to-(--primary-dark); }
   .btn-tenant-primary:hover { @apply scale-[1.03]; }
   .btn-tenant-secondary { @apply bg-(--card) text-(--text) border border-(--line); }
@@ -828,9 +823,9 @@ input:-webkit-autofill:active {
   .badge-blue { @apply bg-[#dbeafe] text-[#1e40af]; }
 
   /* Catalog */
-  .catalog-grid { @apply grid gap-6; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+  .catalog-grid { @apply grid gap-6 grid-cols-[repeat(auto-fill,minmax(280px,1fr))]; }
   .catalog-card { @apply block border rounded-2xl overflow-hidden no-underline cursor-pointer transition-[box-shadow,transform] duration-200 bg-(--card) border-(--line) text-inherit shadow-[0_2px_10px_rgba(0,0,0,0.05)]; }
-  .catalog-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.12); @apply translate-y-[-3px]; }
+  .catalog-card:hover { @apply translate-y-[-3px] shadow-[0_4px_20px_rgba(0,0,0,0.12)]; }
   .catalog-card-image { @apply h-[200px] bg-cover bg-center relative; }
   .catalog-card-body { @apply p-4; }
   .catalog-card-title { @apply text-[1rem] font-bold m-0 mb-1 text-(--text); }

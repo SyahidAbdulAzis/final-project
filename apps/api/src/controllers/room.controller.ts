@@ -9,14 +9,14 @@ import {
 } from '../services/room.service.js';
 import { roomCreateSchema, roomUpdateSchema } from '../validations/room.validation.js';
 import type { AuthRequest } from '../middlewares/auth.middleware.js';
-import { badRequest, pickParam, parseOrBad, notFound } from '../utils/controller.utils.js';
+import { badRequest, handleError, pickParam, parseOrBad, notFound } from '../utils/controller.utils.js';
 
 export async function getAllRoomsHandler(_req: Request, res: Response) {
   try {
     const rooms = await getAllRooms();
     return res.json(rooms);
   } catch (error) {
-    return badRequest(res, (error as Error).message);
+    return handleError(res, error);
   }
 }
 
@@ -28,7 +28,7 @@ export async function getRoomByIdHandler(req: Request, res: Response) {
     if (!room) return notFound(res, 'Room tidak ditemukan');
     return res.json(room);
   } catch (error) {
-    return badRequest(res, (error as Error).message);
+    return handleError(res, error);
   }
 }
 
@@ -39,7 +39,7 @@ export async function createRoomHandler(req: AuthRequest, res: Response) {
     const room = await createRoom(req.user!.id, { ...parsed, description: parsed.description || '' });
     return res.status(201).json(room);
   } catch (error) {
-    return badRequest(res, (error as Error).message);
+    return handleError(res, error);
   }
 }
 
@@ -52,7 +52,7 @@ export async function updateRoomHandler(req: AuthRequest, res: Response) {
     const room = await updateRoom(id, req.user!.id, parsed);
     return res.json(room);
   } catch (error) {
-    return badRequest(res, (error as Error).message);
+    return handleError(res, error);
   }
 }
 
@@ -63,7 +63,7 @@ export async function deleteRoomHandler(req: AuthRequest, res: Response) {
     await deleteRoom(id, req.user!.id);
     return res.json({ message: 'Room berhasil dihapus' });
   } catch (error) {
-    return badRequest(res, (error as Error).message);
+    return handleError(res, error);
   }
 }
 
@@ -78,6 +78,6 @@ export async function getRoomsByPropertyHandler(req: Request, res: Response) {
     const result = await getRoomsByProperty(propertyId, page, take, sortBy, order);
     return res.json(result);
   } catch (error) {
-    return badRequest(res, (error as Error).message);
+    return handleError(res, error);
   }
 }

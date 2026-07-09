@@ -35,10 +35,6 @@ export async function sendEmail(options: EmailOptions): Promise<void> {
   const transporter = createTransporter();
   
   if (!transporter) {
-    console.log('Email Service (Not Configured):', {
-      to: options.to,
-      subject: options.subject,
-    });
     return;
   }
 
@@ -52,7 +48,6 @@ export async function sendEmail(options: EmailOptions): Promise<void> {
       html: options.html,
     });
     
-    console.log('Email sent successfully to:', options.to);
   } catch (error) {
     console.error('Failed to send email:', error);
     throw error;
@@ -161,10 +156,6 @@ export async function sendCheckInReminders(): Promise<number> {
     } catch (error) {
       console.error(`Failed to send reminder for booking ${booking.id}:`, error);
     }
-  }
-
-  if (sentCount > 0) {
-    console.log(`Check-in reminders sent: ${sentCount} booking(s)`);
   }
 
   return sentCount;

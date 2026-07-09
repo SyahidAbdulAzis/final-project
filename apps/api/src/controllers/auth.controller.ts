@@ -22,7 +22,7 @@ import {
   verifyAccount,
 } from '../services/auth.service.js';
 import { sendEmail, verificationEmailTemplate, resetPasswordEmailTemplate } from '../utils/email.js';
-import { badRequest, parseOrBad, pickParam } from '../utils/controller.utils.js';
+import { badRequest, handleError, parseOrBad, pickParam } from '../utils/controller.utils.js';
 
 export async function registerHandler(req: Request, res: Response) {
   const roleParsed = parseOrBad(res, roleParamSchema, req.params);
@@ -33,7 +33,7 @@ export async function registerHandler(req: Request, res: Response) {
     await sendEmail(bodyParsed.email, 'Verifikasi Akun StayEase', verificationEmailTemplate('', result.token));
     return res.status(201).json({ message: 'Registrasi berhasil. Silakan cek email untuk verifikasi.', token: result.token });
   } catch (error) {
-    return badRequest(res, (error as Error).message);
+    return handleError(res, error);
   }
 }
 
@@ -43,7 +43,7 @@ export async function verifyHandler(req: Request, res: Response) {
   try {
     return res.json(await verifyAccount(bodyParsed.token, bodyParsed.password));
   } catch (error) {
-    return badRequest(res, (error as Error).message);
+    return handleError(res, error);
   }
 }
 
@@ -55,7 +55,7 @@ export async function loginHandler(req: Request, res: Response) {
     const result = await loginAccount(bodyParsed.email, roleParsed.role, bodyParsed.password);
     return res.json(result);
   } catch (error) {
-    return badRequest(res, (error as Error).message);
+    return handleError(res, error);
   }
 }
 
@@ -67,7 +67,7 @@ export async function resendHandler(req: Request, res: Response) {
     await sendEmail(bodyParsed.email, 'Verifikasi Akun StayEase', verificationEmailTemplate('', result.token));
     return res.json({ message: 'Email verifikasi telah dikirim ulang.', token: result.token });
   } catch (error) {
-    return badRequest(res, (error as Error).message);
+    return handleError(res, error);
   }
 }
 
@@ -79,7 +79,7 @@ export async function forgotPasswordHandler(req: Request, res: Response) {
     await sendEmail(bodyParsed.email, 'Reset Password StayEase', resetPasswordEmailTemplate('', result.token));
     return res.json({ message: 'Email reset password telah dikirim.', token: result.token });
   } catch (error) {
-    return badRequest(res, (error as Error).message);
+    return handleError(res, error);
   }
 }
 
@@ -89,7 +89,7 @@ export async function resetPasswordHandler(req: Request, res: Response) {
   try {
     return res.json(await resetPassword(bodyParsed.token, bodyParsed.password));
   } catch (error) {
-    return badRequest(res, (error as Error).message);
+    return handleError(res, error);
   }
 }
 
@@ -104,7 +104,7 @@ export async function profileGetHandler(req: AuthRequest, res: Response) {
   try {
     return res.json(await getProfile(email));
   } catch (error) {
-    return badRequest(res, (error as Error).message);
+    return handleError(res, error);
   }
 }
 
@@ -121,7 +121,7 @@ export async function profilePatchHandler(req: AuthRequest, res: Response) {
     }
     return res.json(result);
   } catch (error) {
-    return badRequest(res, (error as Error).message);
+    return handleError(res, error);
   }
 }
 
@@ -134,6 +134,6 @@ export async function changePasswordHandler(req: AuthRequest, res: Response) {
   try {
     return res.json(await changePassword(email, bodyParsed.oldPassword, bodyParsed.newPassword));
   } catch (error) {
-    return badRequest(res, (error as Error).message);
+    return handleError(res, error);
   }
 }

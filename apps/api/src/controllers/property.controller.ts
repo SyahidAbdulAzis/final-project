@@ -14,7 +14,7 @@ import {
 } from '../services/property.service.js';
 import { getPropertyWithReviews } from '../services/review.service.js';
 import type { AuthRequest } from '../middlewares/auth.middleware.js';
-import { badRequest, pickParam, notFound } from '../utils/controller.utils.js';
+import { badRequest, handleError, pickParam, notFound } from '../utils/controller.utils.js';
 
 export async function getProperties(req: Request, res: Response) {
   const parsed = propertyQuerySchema.safeParse(req.query);
@@ -33,7 +33,7 @@ export async function getPropertyDetail(req: Request, res: Response) {
     if (!property) return notFound(res, 'Properti tidak ditemukan');
     return res.json(property);
   } catch (error) {
-    return badRequest(res, (error as Error).message);
+    return handleError(res, error);
   }
 }
 
@@ -49,7 +49,7 @@ export async function createPropertyHandler(req: AuthRequest, res: Response) {
     });
     return res.status(201).json(property);
   } catch (error) {
-    return badRequest(res, (error as Error).message);
+    return handleError(res, error);
   }
 }
 
@@ -60,7 +60,7 @@ export async function getTenantPropertiesHandler(req: AuthRequest, res: Response
     const result = await getTenantProperties(req.user!.id, page, take);
     return res.json(result);
   } catch (error) {
-    return badRequest(res, (error as Error).message);
+    return handleError(res, error);
   }
 }
 
@@ -75,7 +75,7 @@ export async function updatePropertyHandler(req: AuthRequest, res: Response) {
     const property = await updateProperty(id, req.user!.id, parsed.data);
     return res.json(property);
   } catch (error) {
-    return badRequest(res, (error as Error).message);
+    return handleError(res, error);
   }
 }
 
@@ -86,6 +86,6 @@ export async function deletePropertyHandler(req: AuthRequest, res: Response) {
     await deleteProperty(id, req.user!.id);
     return res.json({ message: 'Properti berhasil dihapus' });
   } catch (error) {
-    return badRequest(res, (error as Error).message);
+    return handleError(res, error);
   }
 }

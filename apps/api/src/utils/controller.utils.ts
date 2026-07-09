@@ -20,3 +20,11 @@ export function parseOrBad<T>(res: Response, schema: ZodSchema<T>, data: unknown
   badRequest(res, 'Input tidak valid', parsed.error);
   return null;
 }
+
+export function handleError(res: Response, error: unknown) {
+  const msg = error instanceof Error ? error.message : 'Terjadi kesalahan';
+  if (msg.includes('Foreign key') || msg.includes('constraint') || msg.includes('Prisma')) {
+    return badRequest(res, 'Operasi gagal: data terkait masih digunakan atau input tidak valid');
+  }
+  return badRequest(res, msg);
+}

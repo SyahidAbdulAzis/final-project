@@ -10,8 +10,8 @@ import { verifyToken, requireRole } from '../middlewares/auth.middleware.js';
 const categoryRouter = Router();
 
 categoryRouter.get('/categories', getAllCategoriesHandler);
-categoryRouter.post('/categories', verifyToken as any, requireRole('TENANT') as any, createCategoryHandler as any);
-categoryRouter.patch('/categories/:id', verifyToken as any, requireRole('TENANT') as any, updateCategoryHandler as any);
-categoryRouter.delete('/categories/:id', verifyToken as any, requireRole('TENANT') as any, deleteCategoryHandler as any);
+categoryRouter.post('/categories', verifyToken, requireRole('TENANT'), createCategoryHandler);
+categoryRouter.patch('/categories/:id', verifyToken, requireRole('TENANT'), updateCategoryHandler);
+categoryRouter.delete('/categories/:id', verifyToken, requireRole('TENANT'), deleteCategoryHandler);
 
 export { categoryRouter };

@@ -15,7 +15,7 @@ import {
   deleteSeasonalRate,
 } from '../services/availability.service.js';
 import type { AuthRequest } from '../middlewares/auth.middleware.js';
-import { badRequest, pickParam, parseOrBad } from '../utils/controller.utils.js';
+import { badRequest, handleError, pickParam, parseOrBad } from '../utils/controller.utils.js';
 
 export async function createAvailabilityHandler(req: AuthRequest, res: Response) {
   const parsed = parseOrBad(res, availabilityCreateSchema, req.body);
@@ -28,7 +28,7 @@ export async function createAvailabilityHandler(req: AuthRequest, res: Response)
     });
     return res.status(201).json(item);
   } catch (error) {
-    return badRequest(res, (error as Error).message);
+    return handleError(res, error);
   }
 }
 
@@ -43,7 +43,7 @@ export async function bulkAvailabilityHandler(req: AuthRequest, res: Response) {
     });
     return res.status(201).json(items);
   } catch (error) {
-    return badRequest(res, (error as Error).message);
+    return handleError(res, error);
   }
 }
 
@@ -59,7 +59,7 @@ export async function getAvailabilitiesHandler(req: Request, res: Response) {
     const data = all.slice((page - 1) * take, page * take);
     return res.json({ data, meta: { page, take, total, totalPages } });
   } catch (error) {
-    return badRequest(res, (error as Error).message);
+    return handleError(res, error);
   }
 }
 
@@ -74,7 +74,7 @@ export async function createSeasonalRateHandler(req: AuthRequest, res: Response)
     });
     return res.status(201).json(item);
   } catch (error) {
-    return badRequest(res, (error as Error).message);
+    return handleError(res, error);
   }
 }
 
@@ -90,7 +90,7 @@ export async function getSeasonalRatesHandler(req: Request, res: Response) {
     const data = all.slice((page - 1) * take, page * take);
     return res.json({ data, meta: { page, take, total, totalPages } });
   } catch (error) {
-    return badRequest(res, (error as Error).message);
+    return handleError(res, error);
   }
 }
 
@@ -109,7 +109,7 @@ export async function updateSeasonalRateHandler(req: AuthRequest, res: Response)
     const item = await updateSeasonalRate(id, req.user!.id, data);
     return res.json(item);
   } catch (error) {
-    return badRequest(res, (error as Error).message);
+    return handleError(res, error);
   }
 }
 
@@ -120,6 +120,6 @@ export async function deleteSeasonalRateHandler(req: AuthRequest, res: Response)
     await deleteSeasonalRate(id, req.user!.id);
     return res.json({ message: 'Tarif musim berhasil dihapus' });
   } catch (error) {
-    return badRequest(res, (error as Error).message);
+    return handleError(res, error);
   }
 }
