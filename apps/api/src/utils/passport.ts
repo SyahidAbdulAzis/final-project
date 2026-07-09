@@ -19,27 +19,35 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
           const email = profile.emails?.[0]?.value;
           if (!email) return done(new Error('Email tidak ditemukan dari Google'), false);
 
+          const sessionRole = (req.session as any)?.oauthRole || 'user';
+          const expectedRole = sessionRole === 'tenant' ? 'TENANT' : 'USER';
+
           let user = await prisma.user.findUnique({ where: { email } });
 
           if (!user) {
-            const sessionRole = (req.session as any)?.oauthRole || 'user';
-            const role = sessionRole === 'tenant' ? 'TENANT' : 'USER';
-
             user = await prisma.user.create({
               data: {
                 email,
                 fullName: profile.displayName || '',
                 photoUrl: profile.photos?.[0]?.value || '',
-                role,
+                role: expectedRole,
                 isVerified: true,
                 passwordHash: '',
               },
             });
-          } else if (!user.isVerified) {
-            user = await prisma.user.update({
-              where: { email },
-              data: { isVerified: true },
-            });
+          } else {
+            if (user.role !== expectedRole) {
+              const roleLabel = user.role === 'TENANT' ? 'Tuan Rumah' : 'Penyewa';
+              return done(null, false, {
+                message: `Email sudah terdaftar sebagai ${roleLabel}. Silakan login di halaman yang sesuai.`,
+              });
+            }
+            if (!user.isVerified) {
+              user = await prisma.user.update({
+                where: { email },
+                data: { isVerified: true },
+              });
+            }
           }
 
           const token = jwt.sign(
