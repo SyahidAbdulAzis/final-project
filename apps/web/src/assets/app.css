@@ -629,7 +629,7 @@ input:-webkit-autofill:active {
   .profile-wide { @apply w-full flex-1 bg-(--bg); }
   .pro-toast { @apply fixed top-5 left-1/2 -translate-x-1/2 z-50 flex items-center justify-center gap-2 w-fit px-5 py-2.5 rounded-xl text-[0.85rem] font-semibold shadow-[0_4px_16px_rgba(0,0,0,0.12)]; animation: slideDown 0.3s ease; }
   .pro-toast.success { @apply bg-[#e6f6ee] text-[#0d6f3f] border border-[#b8e8cf]; }
-  .pw-layout { @apply max-w-[1360px] mx-auto px-7 pb-20 grid items-start gap-7 relative -mt-[72px] w-[calc(100%-56px)] grid-cols-[300px_1fr]; }
+  .pw-layout { @apply max-w-[1360px] mx-auto px-7 pb-20 grid items-start gap-7 relative mt-[-72px] w-[calc(100%-56px)] grid-cols-[300px_1fr]; }
   .pw-sidebar { @apply sticky top-[92px] self-start h-fit; }
   .pw-user-card { @apply flex flex-col items-center text-center gap-0 rounded-[24px] px-6 py-7 bg-(--card) border border-(--line) shadow-[0_8px_32px_rgba(0,0,0,0.10),0_2px_8px_rgba(0,0,0,0.04)]; }
   .pw-avatar-ring { @apply relative w-[116px] h-[116px] mb-3.5; }
