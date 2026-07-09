@@ -7,6 +7,20 @@ export type PropertyQuery = {
   take: number;
 };
 
+export type ReviewItem = {
+  id: string;
+  rating: number;
+  comment: string;
+  tenantReply: string | null;
+  repliedAt: string | null;
+  createdAt: string;
+  user: {
+    id: string;
+    fullName: string;
+    photoUrl: string | null;
+  };
+};
+
 export type PropertyItem = {
   id: string;
   name: string;
@@ -17,6 +31,8 @@ export type PropertyItem = {
   imageUrl: string;
   available: boolean;
   rating?: number;
+  reviewCount: number;
+  reviews: ReviewItem[];
 };
 
 export type PropertyMeta = {

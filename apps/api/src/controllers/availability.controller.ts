@@ -50,9 +50,14 @@ export async function bulkAvailabilityHandler(req: AuthRequest, res: Response) {
 export async function getAvailabilitiesHandler(req: Request, res: Response) {
   const roomId = pickParam(String(req.query.roomId));
   if (!roomId) return badRequest(res, 'Room ID wajib diisi');
+  const page = Number(req.query.page) || 1;
+  const take = Number(req.query.take) || 10;
   try {
-    const items = await getAvailabilitiesByRoom(roomId);
-    return res.json(items);
+    const all = await getAvailabilitiesByRoom(roomId);
+    const total = all.length;
+    const totalPages = Math.max(1, Math.ceil(total / take));
+    const data = all.slice((page - 1) * take, page * take);
+    return res.json({ data, meta: { page, take, total, totalPages } });
   } catch (error) {
     return handleError(res, error);
   }
@@ -76,9 +81,14 @@ export async function createSeasonalRateHandler(req: AuthRequest, res: Response)
 export async function getSeasonalRatesHandler(req: Request, res: Response) {
   const roomId = pickParam(String(req.query.roomId));
   if (!roomId) return badRequest(res, 'Room ID wajib diisi');
+  const page = Number(req.query.page) || 1;
+  const take = Number(req.query.take) || 10;
   try {
-    const items = await getSeasonalRatesByRoom(roomId);
-    return res.json(items);
+    const all = await getSeasonalRatesByRoom(roomId);
+    const total = all.length;
+    const totalPages = Math.max(1, Math.ceil(total / take));
+    const data = all.slice((page - 1) * take, page * take);
+    return res.json({ data, meta: { page, take, total, totalPages } });
   } catch (error) {
     return handleError(res, error);
   }

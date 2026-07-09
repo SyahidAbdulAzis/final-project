@@ -23,3 +23,7 @@ Thumbs.db
 .vscode/
 .idea/
 
+# generated / uploads
+*.tsbuildinfo
+apps/api/uploads/
+

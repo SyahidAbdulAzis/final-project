@@ -12,7 +12,7 @@ export const availabilityBulkSchema = z.object({
   isAvailable: z.boolean().default(true),
 });
 
-export const seasonalRateCreateSchema = z.object({
+const seasonalRateBaseSchema = z.object({
   roomId: z.string().min(1, 'Room wajib dipilih'),
   name: z.string().min(1, 'Nama tarif wajib diisi').max(100),
   startDate: z.string().refine((val) => !isNaN(Date.parse(val)), { message: 'Tanggal mulai tidak valid' }),
@@ -21,7 +21,12 @@ export const seasonalRateCreateSchema = z.object({
   adjustmentValue: z.coerce.number().int().min(0),
 });
 
-export const seasonalRateUpdateSchema = seasonalRateCreateSchema.partial().omit({ roomId: true });
+export const seasonalRateCreateSchema = seasonalRateBaseSchema.refine(
+  (data) => new Date(data.startDate) < new Date(data.endDate),
+  { message: 'Tanggal selesai harus setelah tanggal mulai', path: ['endDate'] },
+);
+
+export const seasonalRateUpdateSchema = seasonalRateBaseSchema.partial().omit({ roomId: true });
 
 export type AvailabilityCreateInput = z.infer<typeof availabilityCreateSchema>;
 export type AvailabilityBulkInput = z.infer<typeof availabilityBulkSchema>;

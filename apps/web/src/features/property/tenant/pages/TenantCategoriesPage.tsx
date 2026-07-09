@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { TenantLayout } from '../components/TenantLayout.js';
 import { getCategories, createCategory, updateCategory, deleteCategory } from '../../services/propertyApi.js';
 import { TenantPagination } from '../../../../components/common/TenantPagination.js';
+import { showToast } from '../../../../components/common/Toast.js';
 
 const PAGE_SIZE = 10;
 const EMPTY_META = { page: 1, take: PAGE_SIZE, total: 0, totalPages: 1 };
@@ -22,6 +23,10 @@ export function TenantCategoriesPage() {
 
   useEffect(() => { load(page); }, [page]);
 
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   const reset = () => { setName(''); setEditingId(null); setShowForm(false); };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -30,14 +35,14 @@ export function TenantCategoriesPage() {
       if (editingId) await updateCategory(editingId, name);
       else await createCategory(name);
       reset(); load(1); setPage(1);
-    } catch { alert('Gagal menyimpan kategori'); }
+    } catch { showToast('Gagal menyimpan kategori', 'error'); }
   };
 
   const handleEdit = (c: { id: string; name: string }) => { setName(c.name); setEditingId(c.id); setShowForm(true); };
 
   const handleDelete = async (id: string) => {
     if (!confirm('Yakin ingin menghapus kategori ini?')) return;
-    try { await deleteCategory(id); load(page); } catch { alert('Gagal menghapus kategori'); }
+    try { await deleteCategory(id); load(page); } catch { showToast('Gagal menghapus kategori', 'error'); }
   };
 
   return (
@@ -55,27 +60,27 @@ export function TenantCategoriesPage() {
             <label>Nama Kategori</label>
             <input value={name} onChange={(e) => setName(e.target.value)} required />
           </div>
-          <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
+          <div className="tenant-form-actions">
             <button type="button" className="btn-tenant btn-tenant-secondary" onClick={reset}>Batal</button>
             <button type="submit" className="btn-tenant btn-tenant-primary">Simpan</button>
           </div>
         </form>
       )}
 
-      <div className="tenant-card" style={{ padding: 0 }}>
+      <div className="tenant-card tenant-card--flush">
         <div className="tenant-table-wrap">
           <table className="tenant-table">
             <thead>
               <tr>
                 <th>Nama Kategori</th>
-                <th style={{ textAlign: 'right' }}>Aksi</th>
+                <th className="tenant-table-action">Aksi</th>
               </tr>
             </thead>
             <tbody>
               {categories.map((c) => (
                 <tr key={c.id}>
                   <td>{c.name}</td>
-                  <td style={{ textAlign: 'right' }}>
+                  <td className="tenant-table-action">
                     <button className="btn-tenant btn-tenant-ghost" onClick={() => handleEdit(c)}>Edit</button>
                     <button className="btn-tenant btn-tenant-danger" onClick={() => handleDelete(c.id)}>Hapus</button>
                   </td>

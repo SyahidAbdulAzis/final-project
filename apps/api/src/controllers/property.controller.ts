@@ -12,6 +12,7 @@ import {
   updateProperty,
   deleteProperty,
 } from '../services/property.service.js';
+import { getPropertyWithReviews } from '../services/review.service.js';
 import type { AuthRequest } from '../middlewares/auth.middleware.js';
 import { badRequest, handleError, pickParam, notFound } from '../utils/controller.utils.js';
 
@@ -28,7 +29,7 @@ export async function getPropertyDetail(req: Request, res: Response) {
   const id = pickParam(req.params.id);
   if (!id) return badRequest(res, 'Id wajib diisi');
   try {
-    const property = await getPropertyById(id);
+    const property = await getPropertyWithReviews(id);
     if (!property) return notFound(res, 'Properti tidak ditemukan');
     return res.json(property);
   } catch (error) {

@@ -1,12 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Navbar } from '../../../components/common/Navbar';
 import { HeroSection } from '../components/HeroSection';
 import { Footer } from '../../../components/common/Footer';
 import { useProperties } from '../../property/hooks/useProperties';
 import { PropertyList } from '../../property/components/PropertyList';
-import { useAuth } from '../../auth/stores/AuthContext';
-import type { PropertyQuery, PropertyItem } from '../../../types/property';
+import type { PropertyQuery } from '../../../types/property';
 
 const initialQuery: PropertyQuery = {
   city: 'Semua',
@@ -20,8 +19,11 @@ const initialQuery: PropertyQuery = {
 export function LandingPage() {
   const navigate = useNavigate();
   const [query, setState] = useState(initialQuery);
-  const { data, loading } = useProperties(query);
-  const { user } = useAuth();
+  const { data, meta, loading } = useProperties(query);
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   const setQuery = (next: Partial<PropertyQuery>) => {
     if (next.city || next.checkIn || next.checkOut) {
@@ -37,14 +39,8 @@ export function LandingPage() {
     setState((prev) => ({ ...prev, ...next }));
   };
 
-  const handlePropertyClick = (item: PropertyItem) => {
-    if (!user) {
-      alert('Silakan login terlebih dahulu untuk melakukan booking');
-      navigate('/login/user');
-      return;
-    }
-    // Navigate to property detail page where user can select a room and book
-    navigate(`/properties/${item.id}`);
+  const handlePageChange = (page: number) => {
+    setState((prev) => ({ ...prev, page }));
   };
 
   return (
@@ -52,7 +48,15 @@ export function LandingPage() {
       <Navbar query={query} setQuery={setQuery} />
       <main className="page-main">
         <HeroSection />
-        <PropertyList loading={loading} items={data} onPropertyClick={handlePropertyClick} />
+        <PropertyList
+          loading={loading}
+          items={data}
+          title="Properti Tersedia"
+          subtitle="Temukan properti terbaik untuk setiap perjalanan Anda"
+          page={meta.page}
+          totalPages={meta.totalPages}
+          onPageChange={handlePageChange}
+        />
       </main>
       <Footer />
     </div>

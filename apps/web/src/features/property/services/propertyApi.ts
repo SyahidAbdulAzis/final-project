@@ -1,5 +1,10 @@
 import { apiClient } from '../../../lib/axios.js';
 
+export async function getTenantBookings(tenantId: string, page = 1, limit = 100) {
+  const { data } = await apiClient.get(`/bookings/tenant/${tenantId}`, { params: { page, limit } });
+  return data;
+}
+
 export async function getProperties(params?: {
   page?: number;
   take?: number;
@@ -92,8 +97,8 @@ export async function deleteRoom(id: string) {
   return data;
 }
 
-export async function getRoomsByProperty(propertyId: string) {
-  const { data } = await apiClient.get(`/properties/${propertyId}/rooms`);
+export async function getRoomsByProperty(propertyId: string, page = 1, take = 10, sortBy = 'createdAt', order: 'asc' | 'desc' = 'desc') {
+  const { data } = await apiClient.get(`/properties/${propertyId}/rooms`, { params: { page, take, sortBy, order } });
   return data;
 }
 
@@ -116,8 +121,8 @@ export async function bulkAvailability(bulkData: {
   return data;
 }
 
-export async function getAvailabilities(roomId: string) {
-  const { data } = await apiClient.get('/availabilities', { params: { roomId } });
+export async function getAvailabilities(roomId: string, page = 1, take = 10) {
+  const { data } = await apiClient.get('/availabilities', { params: { roomId, page, take } });
   return data;
 }
 
@@ -129,8 +134,8 @@ export async function createSeasonalRate(rateData: {
   return data;
 }
 
-export async function getSeasonalRates(roomId: string) {
-  const { data } = await apiClient.get('/seasonal-rates', { params: { roomId } });
+export async function getSeasonalRates(roomId: string, page = 1, take = 10) {
+  const { data } = await apiClient.get('/seasonal-rates', { params: { roomId, page, take } });
   return data;
 }
 

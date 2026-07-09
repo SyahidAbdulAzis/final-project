@@ -8,9 +8,21 @@ import { loginApi, getProfileApi } from '../services/authApi.js';
 import { Navbar } from '../../../components/common/Navbar.js';
 import { Footer } from '../../../components/common/Footer.js';
 import { PasswordInput } from '../../../components/common/PasswordInput.js';
+import type { User } from '../stores/AuthContext.js';
 
 interface LoginPageProps {
   role?: 'user' | 'tenant';
+}
+
+function mapBackendUser(raw: any, fallbackRole: 'user' | 'tenant' = 'user'): User {
+  return {
+    id: raw.id ?? '',
+    name: raw.fullName ?? raw.name ?? '',
+    email: raw.email ?? '',
+    role: (raw.role?.toLowerCase() ?? fallbackRole) as 'user' | 'tenant',
+    avatar: raw.photoUrl ?? raw.avatar ?? undefined,
+    isVerified: raw.isVerified ?? false,
+  };
 }
 
 export function LoginPage({ role = 'user' }: LoginPageProps) {
@@ -19,6 +31,7 @@ export function LoginPage({ role = 'user' }: LoginPageProps) {
   const { login, user } = useAuth();
   const [searchParams] = useSearchParams();
   const [apiError, setApiError] = useState('');
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [redirectMsg] = useState(() => {
     const msg = sessionStorage.getItem('authRedirectMsg') || '';
     sessionStorage.removeItem('authRedirectMsg');
@@ -26,16 +39,23 @@ export function LoginPage({ role = 'user' }: LoginPageProps) {
   });
 
   useEffect(() => {
+    const error = searchParams.get('error');
+    if (error) setApiError(decodeURIComponent(error));
+  }, [searchParams]);
+
+  useEffect(() => {
     const token = searchParams.get('token');
     if (token && !user) {
+      setIsGoogleLoading(true);
       const email = searchParams.get('email') || '';
       login(token, { id: '', name: '', email, role, isVerified: true });
       getProfileApi(email)
         .then((profile) => {
-          login(token, { ...profile, role: profile.role?.toLowerCase() || role });
+          login(token, mapBackendUser(profile, role));
           navigate(role === 'tenant' ? '/tenant/dashboard' : '/');
         })
-        .catch(() => navigate('/'));
+        .catch(() => navigate('/'))
+        .finally(() => setIsGoogleLoading(false));
     }
   }, [searchParams, user, login, navigate, role]);
 
@@ -61,13 +81,28 @@ export function LoginPage({ role = 'user' }: LoginPageProps) {
     try {
       const response = await loginApi(data.email, data.password, role);
       const { token, user } = response;
-      login(token, { ...user, role: user.role.toLowerCase() as 'user' | 'tenant' });
+      login(token, mapBackendUser(user, role));
       navigate(role === 'tenant' ? '/tenant/dashboard' : '/');
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
       setApiError(msg || 'Email atau password salah');
     }
   };
+
+  if (isGoogleLoading) {
+    return (
+      <div className="layout">
+        <Navbar variant="minimal" />
+        <div className="auth-layout">
+          <div className="auth-card" style={{ textAlign: 'center', padding: '3rem' }}>
+            <div className="spinner" style={{ margin: '0 auto 1rem', width: 32, height: 32, border: '3px solid #e0e0e0', borderTopColor: '#2563eb', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+            <p className="auth-subtitle">Sedang memproses login Google...</p>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="layout">

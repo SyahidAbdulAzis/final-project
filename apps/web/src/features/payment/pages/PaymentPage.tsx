@@ -5,6 +5,7 @@ import { Footer } from '../../../components/common/Footer';
 import { getBookingById, submitManualPayment } from '../../booking/services/bookingApi';
 import { uploadImage } from '../../property/services/uploadApi';
 import { useAuth } from '../../auth/stores/AuthContext';
+import { showToast } from '../../../components/common/Toast';
 import type { BookingResponse } from '../../../types/booking';
 
 export function PaymentPage() {
@@ -134,7 +135,7 @@ export function PaymentPage() {
       // Then submit payment with the uploaded URL
       setSubmitting(true);
       await submitManualPayment(bookingId!, { proofUrl: uploadedUrl });
-      alert('Pembayaran berhasil dikirim! Menunggu konfirmasi.');
+      showToast('Pembayaran berhasil dikirim! Menunggu konfirmasi.', 'success');
       navigate('/');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Gagal mengirim bukti pembayaran');

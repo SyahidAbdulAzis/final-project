@@ -1,11 +1,16 @@
 import { Link } from 'react-router-dom';
+import { TenantPagination } from '../../../components/common/TenantPagination.js';
 import type { PropertyItem } from '../../../types/property';
 import { formatRupiah } from '../../../lib/utils';
 
 type Props = {
   loading: boolean;
   items: PropertyItem[];
-  onPropertyClick?: (item: PropertyItem) => void;
+  title?: string;
+  subtitle?: string;
+  page?: number;
+  totalPages?: number;
+  onPageChange?: (page: number) => void;
 };
 
 function Card({ item }: { item: PropertyItem }) {
@@ -46,12 +51,7 @@ function Card({ item }: { item: PropertyItem }) {
 }
 
 
-function Availability({ item }: { item: PropertyItem }) {
-  return <p className={item.available ? 'chip chip-open' : 'chip chip-closed'}>{item.available ? 'Bisa dipesan' : 'Penuh'}</p>;
-}
-
-function Card({ item, onClick }: { item: PropertyItem; onClick?: () => void }) {
-  const isGuestChoice = item.rating && item.rating >= 4.8;
+function SkeletonGrid() {
   return (
     <div className="property-grid">
       {Array.from({ length: 4 }).map((_, i) => (
@@ -68,27 +68,36 @@ function Card({ item, onClick }: { item: PropertyItem; onClick?: () => void }) {
   );
 }
 
-function Content({ loading, items, onPropertyClick }: Pick<Props, 'loading' | 'items' | 'onPropertyClick'>) {
-  if (loading) return null;
-  const displayItems = items.length ? items : dummyCards;
-  const isDummy = !items.length;
+function Content({ loading, items }: Pick<Props, 'loading' | 'items'>) {
+  if (loading) return <SkeletonGrid />;
+  if (!items.length) return <p className="text-(--muted)">Tidak ada properti ditemukan.</p>;
   return (
     <div className="property-grid">
-      {displayItems.map((item) => (
-        <Card 
-          key={item.id} 
-          item={item} 
-          onClick={isDummy ? undefined : () => onPropertyClick?.(item)} 
-        />
+      {items.map((item) => (
+        <Card key={item.id} item={item} />
       ))}
     </div>
   );
 }
 
-export function PropertyList({ loading, items, page = 1, totalPages = 1, onPageChange }: Props) {
+export function PropertyList({ loading, items, title, subtitle, page = 1, totalPages = 1, onPageChange }: Props) {
   return (
     <section id="properti" className="listing-section">
-      <Content loading={props.loading} items={props.items} onPropertyClick={props.onPropertyClick} />
+      {title && (
+        <div className="listing-heading">
+          <div>
+            <h2>{title}</h2>
+            {subtitle && <p>{subtitle}</p>}
+          </div>
+          {!loading && items.length > 0 && (
+            <span className="listing-count">{items.length} properti</span>
+          )}
+        </div>
+      )}
+      <Content loading={loading} items={items} />
+      {!loading && totalPages > 1 && onPageChange && (
+        <TenantPagination page={page} totalPages={totalPages} onPageChange={onPageChange} />
+      )}
     </section>
   );
 }

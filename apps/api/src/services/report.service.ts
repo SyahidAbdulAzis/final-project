@@ -264,6 +264,76 @@ export interface PropertyAvailabilityData {
   }>;
 }
 
+export interface SalesChartItem {
+  propertyId: string;
+  propertyName: string;
+  totalSales: number;
+  percentage: number;
+}
+
+export async function getSalesChartData(
+  tenantId: string,
+  startDate?: Date,
+  endDate?: Date,
+): Promise<SalesChartItem[]> {
+  const where: any = {
+    room: {
+      property: {
+        tenantId,
+      },
+    },
+    status: 'DIKONFIRMASI',
+  };
+
+  if (startDate && endDate) {
+    where.createdAt = {
+      gte: startDate,
+      lte: endDate,
+    };
+  }
+
+  const bookings = await prisma.booking.findMany({
+    where,
+    include: {
+      room: {
+        include: {
+          property: {
+            select: { id: true, name: true },
+          },
+        },
+      },
+    },
+  });
+
+  const propertyMap = new Map<string, { name: string; totalSales: number }>();
+  let grandTotal = 0;
+
+  for (const booking of bookings) {
+    const propertyId = (booking.room as any).property.id;
+    const propertyName = (booking.room as any).property.name;
+
+    if (!propertyMap.has(propertyId)) {
+      propertyMap.set(propertyId, { name: propertyName, totalSales: 0 });
+    }
+    propertyMap.get(propertyId)!.totalSales += booking.totalPrice;
+    grandTotal += booking.totalPrice;
+  }
+
+  const result: SalesChartItem[] = [];
+  for (const [propertyId, data] of propertyMap.entries()) {
+    result.push({
+      propertyId,
+      propertyName: data.name,
+      totalSales: data.totalSales,
+      percentage: grandTotal > 0 ? parseFloat(((data.totalSales / grandTotal) * 100).toFixed(1)) : 0,
+    });
+  }
+
+  result.sort((a, b) => b.totalSales - a.totalSales);
+
+  return result;
+}
+
 export async function getPropertyAvailabilityCalendar(
   tenantId: string,
   startDate: Date,

@@ -4,8 +4,39 @@ import QRCode from 'react-qr-code';
 import { Navbar } from '../../../components/common/Navbar';
 import { Footer } from '../../../components/common/Footer';
 import { getSuccessfulBookings } from '../services/bookingApi';
+import { createReview, getReview } from '../services/reviewApi';
 import { useAuth } from '../../auth/stores/AuthContext';
 import type { BookingResponse } from '../../../types/booking';
+import type { ReviewResponse } from '../services/reviewApi';
+
+
+function StarInput({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+  return (
+    <div style={{ display: 'flex', gap: 4, justifyContent: 'center' }}>
+      {[1, 2, 3, 4, 5].map((star) => (
+        <button
+          key={star}
+          type="button"
+          onClick={() => onChange(star)}
+          style={{ background: 'none', border: 'none', fontSize: '2rem', cursor: 'pointer', color: star <= value ? '#f5a623' : '#ddd', transition: 'color 0.15s', padding: '0 2px' }}
+          onMouseEnter={(e) => { if (star > value) (e.target as HTMLElement).style.color = '#f5a623'; }}
+          onMouseLeave={(e) => { if (star > value) (e.target as HTMLElement).style.color = '#ddd'; }}
+        >
+          ★
+        </button>
+      ))}
+    </div>
+  );
+}
+
+type ReviewState = {
+  existing: ReviewResponse | null;
+  rating: number;
+  comment: string;
+  submitting: boolean;
+  submitted: boolean;
+  error: string | null;
+};
 
 export function BookingHistoryPage() {
   const navigate = useNavigate();
@@ -16,6 +47,14 @@ export function BookingHistoryPage() {
   const [error, setError] = useState<string | null>(null);
   const [selectedBooking, setSelectedBooking] = useState<BookingResponse | null>(null);
   const [showQRModal, setShowQRModal] = useState(false);
+  const [review, setReview] = useState<ReviewState>({
+    existing: null,
+    rating: 0,
+    comment: "",
+    submitting: false,
+    submitted: false,
+    error: null,
+  });
 
   useEffect(() => {
     if (isLoading) return;
@@ -41,6 +80,21 @@ export function BookingHistoryPage() {
         setLoading(false);
       });
   }, [isAuthenticated, user, navigate, isLoading]);
+
+  useEffect(() => {
+    if (!showQRModal || !selectedBooking) return;
+    getReview(selectedBooking.id)
+      .then((r) => {
+        if (r) {
+          setReview({ existing: r, rating: r.rating, comment: r.comment, submitting: false, submitted: true, error: null });
+        } else {
+          setReview({ existing: null, rating: 0, comment: "", submitting: false, submitted: false, error: null });
+        }
+      })
+      .catch(() => {
+        setReview({ existing: null, rating: 0, comment: "", submitting: false, submitted: false, error: null });
+      });
+  }, [showQRModal, selectedBooking]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -68,6 +122,33 @@ export function BookingHistoryPage() {
   const handleCloseModal = () => {
     setShowQRModal(false);
     setSelectedBooking(null);
+    resetReview();
+  };
+
+  const canReview = (checkOut: string) => {
+    const checkOutDate = new Date(checkOut);
+    checkOutDate.setHours(0, 0, 0, 0);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return today >= checkOutDate;
+  };
+
+  const handleSubmitReview = async () => {
+    if (!selectedBooking || review.rating === 0 || !review.comment.trim()) {
+      setReview((prev) => ({ ...prev, error: "Rating dan komentar wajib diisi" }));
+      return;
+    }
+    setReview((prev) => ({ ...prev, submitting: true, error: null }));
+    try {
+      await createReview(selectedBooking.id, { rating: review.rating, comment: review.comment });
+      setReview((prev) => ({ ...prev, submitting: false, submitted: true, error: null }));
+    } catch (err) {
+      setReview((prev) => ({ ...prev, submitting: false, error: (err as Error).message }));
+    }
+  };
+
+  const resetReview = () => {
+    setReview({ existing: null, rating: 0, comment: "", submitting: false, submitted: false, error: null });
   };
 
   if (loading) {
@@ -323,6 +404,38 @@ export function BookingHistoryPage() {
                 <div style={{ fontSize: '0.8rem', color: 'var(--muted)', textAlign: 'center', marginTop: 8 }}>
                   Tunjukkan QR code ini kepada tenant saat check-in
                 </div>
+
+                {/* Rating Section */}
+                {canReview(selectedBooking.checkOut) && (
+                  <div style={{ marginTop: 24, borderTop: "1px solid var(--line)", paddingTop: 20 }}>
+                    <h3 style={{ fontSize: "1.1rem", fontWeight: 700, marginBottom: 16, color: "var(--text)", textAlign: "center" }}>
+                      {review.submitted ? "Rating Anda" : "Berikan Rating"}
+                    </h3>
+                    {review.submitted ? (
+                      <div style={{ textAlign: "center" }}>
+                        <StarInput value={review.rating} onChange={() => {}} />
+                        <p style={{ color: "var(--muted)", fontSize: "0.9rem", marginTop: 8, fontStyle: "italic" }}>"{review.comment}"</p>
+                        <p style={{ color: "#4caf50", fontSize: "0.85rem", marginTop: 8 }}>Rating berhasil dikirim</p>
+                      </div>
+                    ) : (
+                      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                        <StarInput value={review.rating} onChange={(v) => setReview((prev) => ({ ...prev, rating: v }))} />
+                        <textarea
+                          placeholder="Tulis komentar Anda..."
+                          value={review.comment}
+                          onChange={(e) => setReview((prev) => ({ ...prev, comment: e.target.value }))}
+                          rows={3}
+                          style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid var(--line)", fontSize: "0.9rem", fontFamily: "inherit", resize: "vertical", boxSizing: "border-box" }}
+                        />
+                        {review.error && <p style={{ color: "#c33", fontSize: "0.85rem" }}>{review.error}</p>}
+                        <button onClick={handleSubmitReview} disabled={review.submitting}
+                          style={{ padding: "10px 0", borderRadius: 8, border: "none", backgroundColor: review.submitting ? "#ccc" : "var(--primary)", color: "#fff", fontSize: "0.95rem", fontWeight: 600, cursor: review.submitting ? "not-allowed" : "pointer" }}>
+                          {review.submitting ? "Mengirim..." : "Kirim Rating"}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           </div>
