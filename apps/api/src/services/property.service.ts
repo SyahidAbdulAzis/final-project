@@ -58,37 +58,6 @@ export async function listProperties(query: PropertyQuery) {
   const propertyIds = props.map((p: any) => p.id);
   const { ratingMap, reviewsMap } = await fetchRatingAndReviews(propertyIds);
 
-  // Fetch real ratings and reviews from reviews
-  const propertyIds = props.map((p: any) => p.id);
-  const [ratingRowsRaw, reviewRowsRaw] = propertyIds.length > 0
-    ? await Promise.all([
-        prisma.$queryRaw`
-          SELECT rm."propertyId", ROUND(AVG(r.rating)::numeric, 1) as "avgRating", COUNT(r.id)::int as "count"
-          FROM "Review" r
-          JOIN "Booking" b ON b.id = r."bookingId"
-          JOIN "Room" rm ON rm.id = b."roomId"
-          WHERE rm."propertyId" = ANY(${propertyIds})
-          GROUP BY rm."propertyId"
-        `,
-        prisma.$queryRaw`
-          SELECT rm."propertyId", r.rating, r.comment
-          FROM "Review" r
-          JOIN "Booking" b ON b.id = r."bookingId"
-          JOIN "Room" rm ON rm.id = b."roomId"
-          WHERE rm."propertyId" = ANY(${propertyIds})
-          ORDER BY r."createdAt" DESC
-        `,
-      ])
-    : [[], []];
-  const ratingRows = ratingRowsRaw as Array<{ propertyId: string; avgRating: number; count: number }>;
-  const reviewRows = reviewRowsRaw as Array<{ propertyId: string; rating: number; comment: string }>;
-  const ratingMap = new Map(ratingRows.map((r) => [r.propertyId, { rating: Number(r.avgRating), count: r.count }]));
-  const reviewsMap = new Map<string, Array<{ rating: number; comment: string }>>();
-  for (const rev of reviewRows) {
-    if (!reviewsMap.has(rev.propertyId)) reviewsMap.set(rev.propertyId, []);
-    reviewsMap.get(rev.propertyId)!.push({ rating: rev.rating, comment: rev.comment });
-  }
-
   const items: PropertyItem[] = props.map((prop: any) => {
     let lowestPrice = 0;
     let isAvailable = false;
