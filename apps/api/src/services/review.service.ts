@@ -127,6 +127,10 @@ export async function getPropertyWithReviews(propertyId: string) {
         include: {
           availabilities: true,
           seasonalRates: true,
+          bookings: {
+            where: { status: { in: ['MENUNGGU_PEMBAYARAN', 'MENUNGGU_KONFIRMASI', 'DIKONFIRMASI'] } },
+            select: { checkIn: true, checkOut: true, status: true },
+          },
         },
       },
       tenant: { select: { id: true, fullName: true, email: true, photoUrl: true } },

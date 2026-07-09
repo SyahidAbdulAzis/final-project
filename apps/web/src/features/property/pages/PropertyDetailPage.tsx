@@ -17,6 +17,7 @@ interface Room {
   maxGuests: number;
   availabilities: { date: string; isAvailable: boolean }[];
   seasonalRates: { name: string; startDate: string; endDate: string; adjustmentType: string; adjustmentValue: number }[];
+  bookings: { checkIn: string; checkOut: string; status: string }[];
 }
 
 interface PropertyDetail {
@@ -34,7 +35,15 @@ interface PropertyDetail {
 
 function buildAvailabilityMap(room?: Room) {
   if (!room) return {};
-  return Object.fromEntries(room.availabilities.map((a) => [a.date.slice(0, 10), a.isAvailable]));
+  const map: Record<string, boolean> = Object.fromEntries(room.availabilities.map((a) => [a.date.slice(0, 10), a.isAvailable]));
+  if (room.bookings) {
+    for (const b of room.bookings) {
+      const dates = getDatesInRange(b.checkIn, b.checkOut);
+      dates.pop();
+      for (const d of dates) map[d] = false;
+    }
+  }
+  return map;
 }
 
 function getDatesInRange(start: string, end: string) {
