@@ -13,9 +13,9 @@ const roomRouter = Router();
 
 roomRouter.get('/rooms', getAllRoomsHandler);
 roomRouter.get('/rooms/:id', getRoomByIdHandler);
-roomRouter.get('/properties/:propertyId/rooms', verifyToken as any, requireRole('TENANT') as any, getRoomsByPropertyHandler as any);
-roomRouter.post('/rooms', verifyToken as any, requireRole('TENANT') as any, createRoomHandler as any);
-roomRouter.patch('/rooms/:id', verifyToken as any, requireRole('TENANT') as any, updateRoomHandler as any);
-roomRouter.delete('/rooms/:id', verifyToken as any, requireRole('TENANT') as any, deleteRoomHandler as any);
+roomRouter.get('/properties/:propertyId/rooms', verifyToken, requireRole('TENANT'), getRoomsByPropertyHandler);
+roomRouter.post('/rooms', verifyToken, requireRole('TENANT'), createRoomHandler);
+roomRouter.patch('/rooms/:id', verifyToken, requireRole('TENANT'), updateRoomHandler);
+roomRouter.delete('/rooms/:id', verifyToken, requireRole('TENANT'), deleteRoomHandler);
 
 export { roomRouter };

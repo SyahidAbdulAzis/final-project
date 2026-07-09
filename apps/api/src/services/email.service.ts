@@ -35,10 +35,6 @@ export async function sendEmail(options: EmailOptions): Promise<void> {
   const transporter = createTransporter();
   
   if (!transporter) {
-    console.log('Email Service (Not Configured):', {
-      to: options.to,
-      subject: options.subject,
-    });
     return;
   }
 
@@ -52,7 +48,6 @@ export async function sendEmail(options: EmailOptions): Promise<void> {
       html: options.html,
     });
     
-    console.log('Email sent successfully to:', options.to);
   } catch (error) {
     console.error('Failed to send email:', error);
     throw error;
@@ -116,6 +111,54 @@ export async function sendPaymentRejectionEmail(
   `;
   
   await sendEmail({ to: userEmail, subject, html });
+}
+
+import prisma from '../lib/prisma.js';
+
+export async function sendCheckInReminders(): Promise<number> {
+  const now = new Date();
+  const in24Hours = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+
+  const bookings = await prisma.booking.findMany({
+    where: {
+      status: 'DIKONFIRMASI',
+      reminderSentAt: null,
+      checkIn: {
+        gte: now,
+        lte: in24Hours,
+      },
+    },
+    include: {
+      user: {
+        select: { email: true, fullName: true },
+      },
+      room: {
+        include: {
+          property: { select: { name: true, address: true } },
+        },
+      },
+    },
+  });
+
+  let sentCount = 0;
+  for (const booking of bookings) {
+    try {
+      await sendCheckInReminderEmail(
+        booking.user.email,
+        booking.user.fullName,
+        booking,
+      );
+      await prisma.booking.update({
+        where: { id: booking.id },
+        data: { reminderSentAt: new Date() },
+      });
+      sentCount++;
+    } catch (error) {
+      console.error(`Failed to send reminder for booking ${booking.id}:`, error);
+    }
+  }
+
+  return sentCount;
 }
 
 export async function sendCheckInReminderEmail(

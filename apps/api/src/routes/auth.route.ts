@@ -21,20 +21,29 @@ authRouter.post('/auth/login/:role', loginHandler);
 authRouter.post('/auth/resend-verification', resendHandler);
 authRouter.post('/auth/forgot-password', forgotPasswordHandler);
 authRouter.post('/auth/reset-password', resetPasswordHandler);
-authRouter.get('/auth/profile/:email', verifyToken as any, profileGetHandler as any);
-authRouter.patch('/auth/profile/:email', verifyToken as any, profilePatchHandler as any);
-authRouter.patch('/auth/profile/:email/password', verifyToken as any, changePasswordHandler as any);
+authRouter.get('/auth/profile/:email', verifyToken, profileGetHandler);
+authRouter.patch('/auth/profile/:email', verifyToken, profilePatchHandler);
+authRouter.patch('/auth/profile/:email/password', verifyToken, changePasswordHandler);
 
 authRouter.get('/auth/google/callback',
-  passport.authenticate('google', { session: false, failureRedirect: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/login?error=google_failed` }),
-  (req, res) => {
-    const sessionRole = (req.session as any)?.oauthRole || 'user';
-    const data = req.user as any;
-    const token = data?.token || '';
-    const user = data?.user || {};
-    const role = user.role?.toLowerCase() || sessionRole;
-    const email = encodeURIComponent(user.email || '');
-    return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/login/${role}?token=${token}&email=${email}`);
+  (req, res, next) => {
+    passport.authenticate('google', { session: false }, (err: any, data: any, info: any) => {
+      const sessionRole = req.session?.oauthRole || 'user';
+      const intent = req.session?.oauthIntent || 'login';
+      const frontend = process.env.FRONTEND_URL || 'http://localhost:5173';
+
+      if (err || !data) {
+        const errorMsg = encodeURIComponent(info?.message || 'Autentikasi Google gagal');
+        const page = intent === 'register' ? 'register' : 'login';
+        return res.redirect(`${frontend}/${page}/${sessionRole}?error=${errorMsg}`);
+      }
+
+      const token = data.token || '';
+      const user = data.user || {};
+      const role = user.role?.toLowerCase() || sessionRole;
+      const email = encodeURIComponent(user.email || '');
+      return res.redirect(`${frontend}/login/${role}?token=${token}&email=${email}`);
+    })(req, res, next);
   }
 );
 
@@ -45,7 +54,8 @@ authRouter.get(
     if (role !== 'user' && role !== 'tenant') {
       return res.status(400).json({ message: 'Role tidak valid' });
     }
-    (req.session as any).oauthRole = role;
+    req.session.oauthRole = role;
+    req.session.oauthIntent = (req.query.intent as string) || 'login';
     passport.authenticate('google', {
       scope: ['profile', 'email'],
     })(req, res, next);

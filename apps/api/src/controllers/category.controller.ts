@@ -6,7 +6,7 @@ import {
   updateCategory,
   deleteCategory,
 } from '../services/category.service.js';
-import { badRequest, pickParam, parseOrBad } from '../utils/controller.utils.js';
+import { badRequest, handleError, pickParam, parseOrBad } from '../utils/controller.utils.js';
 
 export async function createCategoryHandler(req: Request, res: Response) {
   const parsed = parseOrBad(res, categoryCreateSchema, req.body);
@@ -15,7 +15,7 @@ export async function createCategoryHandler(req: Request, res: Response) {
     const category = await createCategory(parsed.name);
     return res.status(201).json(category);
   } catch (error) {
-    return badRequest(res, (error as Error).message);
+    return handleError(res, error);
   }
 }
 
@@ -26,7 +26,7 @@ export async function getAllCategoriesHandler(req: Request, res: Response) {
     const result = await getAllCategories(page, take);
     return res.json(result);
   } catch (error) {
-    return badRequest(res, (error as Error).message);
+    return handleError(res, error);
   }
 }
 
@@ -39,7 +39,7 @@ export async function updateCategoryHandler(req: Request, res: Response) {
     const category = await updateCategory(id, parsed.name!);
     return res.json(category);
   } catch (error) {
-    return badRequest(res, (error as Error).message);
+    return handleError(res, error);
   }
 }
 
@@ -50,6 +50,6 @@ export async function deleteCategoryHandler(req: Request, res: Response) {
     await deleteCategory(id);
     return res.json({ message: 'Kategori berhasil dihapus' });
   } catch (error) {
-    return badRequest(res, (error as Error).message);
+    return handleError(res, error);
   }
 }

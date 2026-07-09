@@ -4,6 +4,13 @@ import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import prisma from '../lib/prisma.js';
 import jwt from 'jsonwebtoken';
 
+declare module 'express-session' {
+  interface SessionData {
+    oauthRole?: string;
+    oauthIntent?: string;
+  }
+}
+
 if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
   passport.use(
     new GoogleStrategy(
@@ -19,27 +26,35 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
           const email = profile.emails?.[0]?.value;
           if (!email) return done(new Error('Email tidak ditemukan dari Google'), false);
 
+          const sessionRole = req.session?.oauthRole || 'user';
+          const expectedRole = sessionRole === 'tenant' ? 'TENANT' : 'USER';
+
           let user = await prisma.user.findUnique({ where: { email } });
 
           if (!user) {
-            const sessionRole = (req.session as any)?.oauthRole || 'user';
-            const role = sessionRole === 'tenant' ? 'TENANT' : 'USER';
-
             user = await prisma.user.create({
               data: {
                 email,
                 fullName: profile.displayName || '',
                 photoUrl: profile.photos?.[0]?.value || '',
-                role,
+                role: expectedRole,
                 isVerified: true,
-                passwordHash: '',
+                passwordHash: null,
               },
             });
-          } else if (!user.isVerified) {
-            user = await prisma.user.update({
-              where: { email },
-              data: { isVerified: true },
-            });
+          } else {
+            if (user.role !== expectedRole) {
+              const roleLabel = user.role === 'TENANT' ? 'Tuan Rumah' : 'Penyewa';
+              return done(null, false, {
+                message: `Email sudah terdaftar sebagai ${roleLabel}. Silakan login di halaman yang sesuai.`,
+              });
+            }
+            if (!user.isVerified) {
+              user = await prisma.user.update({
+                where: { email },
+                data: { isVerified: true },
+              });
+            }
           }
 
           const token = jwt.sign(
@@ -48,7 +63,7 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
             { expiresIn: '7d' }
           );
 
-          return done(null, { token, user } as any);
+          return done(null, { token, user } as unknown as Express.User);
         } catch (err) {
           return done(err, false);
         }

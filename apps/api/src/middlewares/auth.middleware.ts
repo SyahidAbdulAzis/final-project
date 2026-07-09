@@ -1,11 +1,15 @@
 import type { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 
-export interface AuthRequest extends Request {
-  user?: { id: string; email: string; role: string };
+declare module 'express-serve-static-core' {
+  interface Request {
+    user?: { id: string; email: string; role: string };
+  }
 }
 
-export function verifyToken(req: AuthRequest, res: Response, next: NextFunction) {
+export type AuthRequest = Request;
+
+export function verifyToken(req: Request, res: Response, next: NextFunction) {
   const authHeader = req.headers.authorization;
   const token = authHeader?.split(' ')[1];
 
@@ -23,7 +27,7 @@ export function verifyToken(req: AuthRequest, res: Response, next: NextFunction)
 }
 
 export function requireRole(role: string) {
-  return (req: AuthRequest, res: Response, next: NextFunction) => {
+  return (req: Request, res: Response, next: NextFunction) => {
     if (!req.user) {
       return res.status(401).json({ message: 'Unauthorized' });
     }

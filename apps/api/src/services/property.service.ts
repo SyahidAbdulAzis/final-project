@@ -1,5 +1,6 @@
 import prisma from '../lib/prisma.js';
 import type { PropertyItem, PropertyQuery } from '../types/property.type.js';
+import { fetchRatingAndReviews } from './property-rating.helper.js';
 
 export async function listProperties(query: PropertyQuery) {
   const where: any = {};
@@ -29,7 +30,6 @@ export async function listProperties(query: PropertyQuery) {
   const skip = (query.page - 1) * query.take;
   const sortByPrice = query.sortBy === 'price';
 
-  // When sorting by price, fetch all to calculate lowest room price correctly
   const [properties, total] = await Promise.all([
     prisma.property.findMany({
       where,
@@ -54,7 +54,9 @@ export async function listProperties(query: PropertyQuery) {
     prisma.property.count({ where }),
   ]);
 
-  let props = properties as any[];
+  const props = properties as any[];
+  const propertyIds = props.map((p: any) => p.id);
+  const { ratingMap, reviewsMap } = await fetchRatingAndReviews(propertyIds);
 
   const items: PropertyItem[] = props.map((prop: any) => {
     let lowestPrice = 0;
@@ -78,7 +80,9 @@ export async function listProperties(query: PropertyQuery) {
       price: lowestPrice,
       imageUrl: prop.images?.[0]?.url || '',
       available: isAvailable,
-      rating: +(3.5 + Math.random() * 1.5).toFixed(1),
+      reviewCount: ratingMap.get(prop.id)?.count || 0,
+      reviews: reviewsMap.get(prop.id) || [],
+      ...(ratingMap.has(prop.id) ? { rating: ratingMap.get(prop.id)!.rating } : {}),
     };
   });
 
@@ -87,7 +91,6 @@ export async function listProperties(query: PropertyQuery) {
     sortedItems = [...items].sort((a, b) => {
       return query.order === 'asc' ? a.price - b.price : b.price - a.price;
     });
-    // Manual pagination after sorting by price
     const start = (query.page - 1) * query.take;
     sortedItems = sortedItems.slice(start, start + query.take);
   }
@@ -131,7 +134,7 @@ export async function getPropertyById(id: string) {
           seasonalRates: true,
         },
       },
-      tenant: { select: { id: true, fullName: true, email: true } },
+      tenant: { select: { id: true, fullName: true, email: true, photoUrl: true } },
     },
   });
 }

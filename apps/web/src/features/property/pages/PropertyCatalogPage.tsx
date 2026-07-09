@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { getProperties, getCategories } from '../services/propertyApi.js';
 import { Navbar } from '../../../components/common/Navbar.js';
 import { Footer } from '../../../components/common/Footer.js';
 import { PropertyList } from '../components/PropertyList.js';
 import { Dropdown } from '../../../components/common/Dropdown.js';
-import type { PropertyItem } from '../../../types/property';
+import type { PropertyItem, PropertyQuery } from '../../../types/property';
 
 export function PropertyCatalogPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -57,6 +57,18 @@ export function PropertyCatalogPage() {
       .finally(() => setLoading(false));
   }, [page, city, name, category, sortBy, order, checkIn, checkOut, guests]);
 
+  const query: PropertyQuery = { city, checkIn, checkOut, guests, page, take: 12 };
+
+  const setQuery = useCallback((next: Partial<PropertyQuery>) => {
+    const params = new URLSearchParams(searchParams);
+    if (next.city !== undefined) params.set('city', next.city);
+    if (next.checkIn !== undefined) params.set('checkIn', next.checkIn);
+    if (next.checkOut !== undefined) params.set('checkOut', next.checkOut);
+    if (next.guests !== undefined) params.set('guests', String(next.guests));
+    if (next.page !== undefined) params.set('page', String(next.page));
+    setSearchParams(params);
+  }, [searchParams, setSearchParams]);
+
   const updateParam = (key: string, value: string) => {
     const next = new URLSearchParams(searchParams);
     next.set(key, value);
@@ -66,7 +78,7 @@ export function PropertyCatalogPage() {
 
   return (
     <div className="layout">
-      <Navbar />
+      <Navbar query={query} setQuery={setQuery} />
       <main className="page-main catalog-page">
         <div className="catalog-hero">
           <h1>Katalog Properti</h1>
