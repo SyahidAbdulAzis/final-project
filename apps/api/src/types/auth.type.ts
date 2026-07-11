@@ -6,7 +6,7 @@ export type Account = {
   role: Role;
   fullName: string;
   photoUrl: string;
-  passwordHash: string;
+  passwordHash: string | null;
   isVerified: boolean;
   createdAt: number;
 };

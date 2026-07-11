@@ -8,21 +8,10 @@ import { loginApi, getProfileApi } from '../services/authApi.js';
 import { Navbar } from '../../../components/common/Navbar.js';
 import { Footer } from '../../../components/common/Footer.js';
 import { PasswordInput } from '../../../components/common/PasswordInput.js';
-import type { User } from '../stores/AuthContext.js';
+import { mapBackendUser } from '../types/backendUser.js';
 
 interface LoginPageProps {
   role?: 'user' | 'tenant';
-}
-
-function mapBackendUser(raw: any, fallbackRole: 'user' | 'tenant' = 'user'): User {
-  return {
-    id: raw.id ?? '',
-    name: raw.fullName ?? raw.name ?? '',
-    email: raw.email ?? '',
-    role: (raw.role?.toLowerCase() ?? fallbackRole) as 'user' | 'tenant',
-    avatar: raw.photoUrl ?? raw.avatar ?? undefined,
-    isVerified: raw.isVerified ?? false,
-  };
 }
 
 export function LoginPage({ role = 'user' }: LoginPageProps) {
