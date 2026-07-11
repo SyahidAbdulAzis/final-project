@@ -1,16 +1,20 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { verifySchema, type VerifyForm } from '../validations/authSchemas.js';
 import { verifyApi } from '../services/authApi.js';
+import { useAuth } from '../stores/AuthContext.js';
 import { Navbar } from '../../../components/common/Navbar.js';
 import { Footer } from '../../../components/common/Footer.js';
+import { PasswordInput } from '../../../components/common/PasswordInput.js';
+import { mapBackendUser } from '../types/backendUser.js';
 
 export function VerifyPage() {
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token') || '';
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [apiError, setApiError] = useState('');
   const [success, setSuccess] = useState(false);
 
@@ -26,20 +30,37 @@ export function VerifyPage() {
   const onSubmit = async (data: VerifyForm) => {
     setApiError('');
     try {
-      await verifyApi(data.token || token, data.password);
-      setSuccess(true);
-      setTimeout(() => navigate('/login/user'), 2000);
+      const result = await verifyApi(data.token || token, data.password);
+      if (result?.token && result?.user) {
+        const mapped = mapBackendUser(result.user);
+        login(result.token, mapped);
+        setSuccess(true);
+        setTimeout(() => navigate(mapped.role === 'tenant' ? '/tenant/dashboard' : '/'), 1500);
+      } else {
+        setSuccess(true);
+        setTimeout(() => navigate('/login/user'), 2000);
+      }
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
       setApiError(msg || 'Verifikasi gagal. Link mungkin sudah kadaluarsa.');
     }
   };
 
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   return (
     <div className="layout">
       <Navbar variant="minimal" />
       <div className="auth-layout">
         <div className="auth-card">
+          <div className="auth-brand-mark">
+            <div className="auth-brand-logo">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            </div>
+            <span className="auth-brand-name">StayEase</span>
+          </div>
           <h1 className="auth-title">Verifikasi Email</h1>
           <p className="auth-subtitle">Atur password untuk mengaktifkan akun Anda</p>
 
@@ -52,24 +73,22 @@ export function VerifyPage() {
 
             <div className="field-group">
               <label htmlFor="password">Password Baru</label>
-              <input
+              <PasswordInput
                 id="password"
-                type="password"
                 placeholder="Minimal 8 karakter"
+                hasError={!!errors.password}
                 {...register('password')}
-                className={errors.password ? 'input-error' : ''}
               />
               {errors.password && <span className="field-error">{errors.password.message}</span>}
             </div>
 
             <div className="field-group">
               <label htmlFor="confirmPassword">Konfirmasi Password</label>
-              <input
+              <PasswordInput
                 id="confirmPassword"
-                type="password"
                 placeholder="Ulangi password"
+                hasError={!!errors.confirmPassword}
                 {...register('confirmPassword')}
-                className={errors.confirmPassword ? 'input-error' : ''}
               />
               {errors.confirmPassword && (
                 <span className="field-error">{errors.confirmPassword.message}</span>

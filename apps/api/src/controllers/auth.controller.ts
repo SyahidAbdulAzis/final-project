@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import type { AuthRequest } from '../middlewares/auth.middleware.js';
 import {
   changePasswordSchema,
   emailOnlySchema,
@@ -20,32 +21,19 @@ import {
   updateProfile,
   verifyAccount,
 } from '../services/auth.service.js';
-import type { ZodTypeAny } from 'zod';
-
-function badRequest(res: Response, message: string, errors?: unknown) {
-  return res.status(400).json({ message, errors });
-}
-
-function parseOrBad<T>(res: Response, schema: ZodTypeAny, data: unknown) {
-  const parsed = schema.safeParse(data);
-  if (parsed.success) return parsed.data;
-  badRequest(res, 'Input tidak valid', parsed.error);
-  return null;
-}
-
-function pickParam(value: string | string[] | undefined) {
-  if (Array.isArray(value)) return value[0] || '';
-  return value || '';
-}
+import { sendEmail, verificationEmailTemplate, resetPasswordEmailTemplate } from '../utils/email.js';
+import { badRequest, handleError, parseOrBad, pickParam } from '../utils/controller.utils.js';
 
 export async function registerHandler(req: Request, res: Response) {
   const roleParsed = parseOrBad(res, roleParamSchema, req.params);
   const bodyParsed = parseOrBad(res, registerSchema, req.body);
   if (!roleParsed || !bodyParsed) return;
   try {
-    return res.status(201).json(await registerAccount(bodyParsed.email, roleParsed.role));
+    const result = await registerAccount(bodyParsed.email, roleParsed.role);
+    await sendEmail(bodyParsed.email, 'Verifikasi Akun StayEase', verificationEmailTemplate('', result.token));
+    return res.status(201).json({ message: 'Registrasi berhasil. Silakan cek email untuk verifikasi.', token: result.token });
   } catch (error) {
-    return badRequest(res, (error as Error).message);
+    return handleError(res, error);
   }
 }
 
@@ -55,7 +43,7 @@ export async function verifyHandler(req: Request, res: Response) {
   try {
     return res.json(await verifyAccount(bodyParsed.token, bodyParsed.password));
   } catch (error) {
-    return badRequest(res, (error as Error).message);
+    return handleError(res, error);
   }
 }
 
@@ -64,9 +52,10 @@ export async function loginHandler(req: Request, res: Response) {
   const bodyParsed = parseOrBad(res, loginSchema, req.body);
   if (!roleParsed || !bodyParsed) return;
   try {
-    return res.json(await loginAccount(bodyParsed.email, roleParsed.role, bodyParsed.password));
+    const result = await loginAccount(bodyParsed.email, roleParsed.role, bodyParsed.password);
+    return res.json(result);
   } catch (error) {
-    return badRequest(res, (error as Error).message);
+    return handleError(res, error);
   }
 }
 
@@ -74,9 +63,11 @@ export async function resendHandler(req: Request, res: Response) {
   const bodyParsed = parseOrBad(res, emailOnlySchema, req.body);
   if (!bodyParsed) return;
   try {
-    return res.json(await resendVerification(bodyParsed.email));
+    const result = await resendVerification(bodyParsed.email);
+    await sendEmail(bodyParsed.email, 'Verifikasi Akun StayEase', verificationEmailTemplate('', result.token));
+    return res.json({ message: 'Email verifikasi telah dikirim ulang.', token: result.token });
   } catch (error) {
-    return badRequest(res, (error as Error).message);
+    return handleError(res, error);
   }
 }
 
@@ -84,9 +75,11 @@ export async function forgotPasswordHandler(req: Request, res: Response) {
   const bodyParsed = parseOrBad(res, emailOnlySchema, req.body);
   if (!bodyParsed) return;
   try {
-    return res.json(await requestResetPassword(bodyParsed.email));
+    const result = await requestResetPassword(bodyParsed.email);
+    await sendEmail(bodyParsed.email, 'Reset Password StayEase', resetPasswordEmailTemplate('', result.token));
+    return res.json({ message: 'Email reset password telah dikirim.', token: result.token });
   } catch (error) {
-    return badRequest(res, (error as Error).message);
+    return handleError(res, error);
   }
 }
 
@@ -96,40 +89,51 @@ export async function resetPasswordHandler(req: Request, res: Response) {
   try {
     return res.json(await resetPassword(bodyParsed.token, bodyParsed.password));
   } catch (error) {
-    return badRequest(res, (error as Error).message);
+    return handleError(res, error);
   }
 }
 
-export async function profileGetHandler(req: Request, res: Response) {
+function forbidden(res: Response) {
+  return res.status(403).json({ message: 'Akses ditolak' });
+}
+
+export async function profileGetHandler(req: AuthRequest, res: Response) {
   const email = pickParam(req.params.email);
   if (!email) return badRequest(res, 'Email wajib diisi');
+  if (email.toLowerCase() !== req.user?.email.toLowerCase()) return forbidden(res);
   try {
     return res.json(await getProfile(email));
   } catch (error) {
-    return badRequest(res, (error as Error).message);
+    return handleError(res, error);
   }
 }
 
-export async function profilePatchHandler(req: Request, res: Response) {
+export async function profilePatchHandler(req: AuthRequest, res: Response) {
   const bodyParsed = parseOrBad(res, profileSchema, req.body);
   const email = pickParam(req.params.email);
   if (!email) return badRequest(res, 'Email wajib diisi');
+  if (email.toLowerCase() !== req.user?.email.toLowerCase()) return forbidden(res);
   if (!bodyParsed) return;
   try {
-    return res.json(await updateProfile(email, bodyParsed.fullName, bodyParsed.photoUrl));
+    const result = await updateProfile(email, bodyParsed.fullName, bodyParsed.photoUrl, bodyParsed.email);
+    if (result.verificationToken) {
+      await sendEmail(result.email, 'Verifikasi Akun StayEase', verificationEmailTemplate('', result.verificationToken));
+    }
+    return res.json(result);
   } catch (error) {
-    return badRequest(res, (error as Error).message);
+    return handleError(res, error);
   }
 }
 
-export async function changePasswordHandler(req: Request, res: Response) {
+export async function changePasswordHandler(req: AuthRequest, res: Response) {
   const bodyParsed = parseOrBad(res, changePasswordSchema, req.body);
   const email = pickParam(req.params.email);
   if (!email) return badRequest(res, 'Email wajib diisi');
+  if (email.toLowerCase() !== req.user?.email.toLowerCase()) return forbidden(res);
   if (!bodyParsed) return;
   try {
     return res.json(await changePassword(email, bodyParsed.oldPassword, bodyParsed.newPassword));
   } catch (error) {
-    return badRequest(res, (error as Error).message);
+    return handleError(res, error);
   }
 }

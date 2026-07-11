@@ -33,6 +33,8 @@ export const resetSchema = z.object({
 export const profileSchema = z.object({
   fullName: z.string().min(2).max(100).optional(),
   photoUrl: z.string().url().optional(),
+  email: z.string().email().optional(),
+  phone: z.string().max(20).optional(),
 });
 
 export const changePasswordSchema = z.object({

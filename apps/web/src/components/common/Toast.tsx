@@ -1,0 +1,54 @@
+import { useState, useEffect } from 'react';
+
+type ToastType = 'success' | 'error' | 'info';
+
+interface Toast {
+  id: string;
+  message: string;
+  type: ToastType;
+}
+
+let toastListeners: ((toast: Toast) => void)[] = [];
+
+export function showToast(message: string, type: ToastType = 'info') {
+  const id = Date.now().toString();
+  const toast: Toast = { id, message, type };
+  toastListeners.forEach((listener) => listener(toast));
+  setTimeout(() => {
+    removeToast(id);
+  }, 3000);
+}
+
+function removeToast(id: string) {
+  toastListeners.forEach((listener) => listener({ id, message: '', type: 'info' } as Toast));
+}
+
+export function ToastProvider({ children }: { children: React.ReactNode }) {
+  const [toasts, setToasts] = useState<Toast[]>([]);
+
+  useEffect(() => {
+    toastListeners.push((toast) => {
+      if (toast.message === '') {
+        setToasts((prev) => prev.filter((t) => t.id !== toast.id));
+      } else {
+        setToasts((prev) => [...prev, toast]);
+      }
+    });
+    return () => {
+      toastListeners = [];
+    };
+  }, []);
+
+  return (
+    <>
+      {children}
+      <div className="toast-container">
+        {toasts.map((toast) => (
+          <div key={toast.id} className={`toast toast-${toast.type}`}>
+            {toast.message}
+          </div>
+        ))}
+      </div>
+    </>
+  );
+}

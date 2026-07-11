@@ -1,8 +1,8 @@
 function BrandInfo() {
   return (
     <div className="brand-info">
-      <img src="/logo/stacked.svg" alt="StayEase" style={{ maxWidth: '80px', height: 'auto', marginBottom: '4px' }} />
-      <p style={{ margin: 0 }}>Solusi pencarian properti dengan harga fleksibel berdasarkan tanggal.</p>
+      <img src="/logo/stacked.svg" alt="StayEase" className="max-w-[80px] h-auto mb-1" />
+      <p className="m-0">Solusi pencarian properti dengan harga fleksibel berdasarkan tanggal.</p>
       <small>© 2026 StayEase. Semua hak dilindungi.</small>
     </div>
   );

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { resendVerificationApi } from '../services/authApi.js';
 import { Navbar } from '../../../components/common/Navbar.js';
@@ -23,11 +23,21 @@ export function CheckEmailPage() {
     }
   };
 
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   return (
     <div className="layout">
       <Navbar variant="minimal" />
       <div className="auth-layout">
         <div className="auth-card">
+          <div className="auth-brand-mark">
+            <div className="auth-brand-logo">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            </div>
+            <span className="auth-brand-name">StayEase</span>
+          </div>
           <h1 className="auth-title">Cek Email Anda</h1>
           <p className="auth-subtitle">
             Kami telah mengirimkan email verifikasi. Silakan cek kotak masuk Anda.

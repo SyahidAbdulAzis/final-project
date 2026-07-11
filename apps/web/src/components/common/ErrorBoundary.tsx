@@ -1,0 +1,47 @@
+import { Component, ReactNode } from 'react';
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+  error: Error | null;
+}
+
+export class ErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundaryState> {
+  constructor(props: { children: ReactNode }) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error('Error caught by boundary:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="layout">
+          <div className="error-boundary">
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+            <h2>Terjadi Kesalahan</h2>
+            <p>Maaf, terjadi kesalahan tak terduga. Silakan refresh halaman atau coba lagi nanti.</p>
+            <button type="button" className="btn-primary" onClick={() => window.location.reload()}>
+              Refresh Halaman
+            </button>
+            <p style={{ fontSize: '0.8rem', color: '#999', marginTop: '1rem' }}>
+              Error: {this.state.error?.message}
+            </p>
+          </div>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}

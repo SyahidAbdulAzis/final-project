@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { SearchForm } from '../../features/landing/components/SearchForm';
 import { useAuth } from '../../features/auth/stores/AuthContext.js';
+import { GuestActions, UserActions } from './NavbarMenu.js';
 import type { PropertyQuery } from '../../types/property';
 
 type Props = {
@@ -11,82 +13,9 @@ type Props = {
 
 function Brand() {
   return (
-    <a className="brand" href="/">
+    <Link className="brand" to="/">
       <img src="/logo/horizontal.svg" alt="stayease" className="brand-logo" />
-    </a>
-  );
-}
-
-function GuestActions() {
-  const [menuOpen, setMenuOpen] = useState(false);
-
-  return (
-    <div className="nav-actions">
-      <a href="/register/tenant" className="host-link">Menjadi Tuan Rumah</a>
-      <div className="account-dropdown">
-        <button
-          className="account-trigger"
-          type="button"
-          aria-label="Buka menu akun"
-          aria-expanded={menuOpen}
-          onClick={() => setMenuOpen((prev) => !prev)}
-        >
-          <svg className="menu-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="3" y1="12" x2="21" y2="12" />
-            <line x1="3" y1="6" x2="21" y2="6" />
-            <line x1="3" y1="18" x2="21" y2="18" />
-          </svg>
-        </button>
-        {menuOpen && (
-          <div className="account-menu glass-card">
-            <a href="/login/user" className="account-item">Masuk atau mendaftar</a>
-            <div className="account-divider" />
-            <a href="/register/tenant" className="account-item">Menjadi Tuan Rumah</a>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function UserActions() {
-  const { user, logout } = useAuth();
-  const [menuOpen, setMenuOpen] = useState(false);
-
-  return (
-    <div className="nav-actions">
-      <a href="/register/tenant" className="host-link">Menjadi Tuan Rumah</a>
-      <div className="account-dropdown">
-        <button
-          className="account-trigger profile-trigger"
-          type="button"
-          aria-label="Buka menu akun"
-          aria-expanded={menuOpen}
-          onClick={() => setMenuOpen((prev) => !prev)}
-        >
-          {user?.avatar ? (
-            <img src={user.avatar} alt="" className="profile-avatar" />
-          ) : (
-            <div className="profile-avatar">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
-              </svg>
-            </div>
-          )}
-        </button>
-        {menuOpen && (
-          <div className="account-menu glass-card">
-            <div className="account-header">
-              <span className="account-name">{user?.name}</span>
-              <span className="account-role">{user?.role === 'tenant' ? 'Tuan Rumah' : 'Penyewa'}</span>
-            </div>
-            <div className="account-divider" />
-            <a href="/profile" className="account-item">Profil</a>
-            <a href="/" className="account-item" onClick={(e) => { e.preventDefault(); logout(); }}>Keluar</a>
-          </div>
-        )}
-      </div>
-    </div>
+    </Link>
   );
 }
 
@@ -96,9 +25,7 @@ export function Navbar({ query, setQuery, variant = 'full' }: Props) {
   const isMinimal = variant === 'minimal';
 
   useEffect(() => {
-    const onScroll = () => {
-      setScrolled(window.scrollY > 8);
-    };
+    const onScroll = () => setScrolled(window.scrollY > 8);
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
@@ -117,4 +44,3 @@ export function Navbar({ query, setQuery, variant = 'full' }: Props) {
     </header>
   );
 }
-
