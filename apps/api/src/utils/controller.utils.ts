@@ -26,5 +26,18 @@ export function handleError(res: Response, error: unknown) {
   if (msg.includes('Foreign key') || msg.includes('constraint') || msg.includes('Prisma')) {
     return badRequest(res, 'Operasi gagal: data terkait masih digunakan atau input tidak valid');
   }
-  return badRequest(res, msg);
+  const safeMessages = [
+    'Email sudah terdaftar',
+    'Akun tidak ditemukan',
+    'Akun belum terverifikasi',
+    'Password belum diatur',
+    'Email atau password salah',
+    'Token tidak valid atau kadaluarsa',
+    'Akun tidak valid',
+    'Reset password hanya untuk akun registrasi email',
+    'Properti tidak ditemukan atau bukan milik Anda',
+    'Input tidak valid',
+  ];
+  const isSafe = safeMessages.some((s) => msg === s);
+  return badRequest(res, isSafe ? msg : 'Terjadi kesalahan, silakan coba lagi');
 }

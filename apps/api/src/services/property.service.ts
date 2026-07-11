@@ -1,9 +1,27 @@
+import { Prisma } from '@prisma/client';
 import prisma from '../lib/prisma.js';
 import type { PropertyItem, PropertyQuery } from '../types/property.type.js';
 import { fetchRatingAndReviews } from './property-rating.helper.js';
 
+interface RoomWithAvailabilities {
+  id: string;
+  basePrice: number;
+  maxGuests: number;
+  availabilities?: Array<{ isAvailable: boolean }>;
+}
+
+interface PropertyWithRelations {
+  id: string;
+  name: string;
+  city: string;
+  description: string;
+  category: { name: string } | null;
+  rooms: RoomWithAvailabilities[];
+  images: Array<{ url: string }>;
+}
+
 export async function listProperties(query: PropertyQuery) {
-  const where: any = {};
+  const where: Prisma.PropertyWhereInput = {};
   if (query.city && query.city !== 'Semua') where.city = query.city;
   if (query.name) where.name = { contains: query.name, mode: 'insensitive' };
   if (query.category && query.category !== 'Semua') {
@@ -11,7 +29,7 @@ export async function listProperties(query: PropertyQuery) {
   }
 
   const hasDates = query.checkIn && query.checkOut;
-  const roomFilter: any = {};
+  const roomFilter: Prisma.RoomWhereInput = {};
   if (query.guests > 1) roomFilter.maxGuests = { gte: query.guests };
   if (hasDates) {
     const start = new Date(query.checkIn!);
@@ -47,23 +65,23 @@ export async function listProperties(query: PropertyQuery) {
         },
         images: { orderBy: { order: 'asc' }, take: 1 },
       },
-      orderBy: sortByPrice ? undefined : ({ name: query.order } as any),
+      orderBy: sortByPrice ? undefined : { name: query.order },
       skip: sortByPrice ? undefined : skip,
       take: sortByPrice ? undefined : query.take,
     }),
     prisma.property.count({ where }),
   ]);
 
-  const props = properties as any[];
-  const propertyIds = props.map((p: any) => p.id);
+  const props: PropertyWithRelations[] = properties;
+  const propertyIds = props.map((p) => p.id);
   const { ratingMap, reviewsMap } = await fetchRatingAndReviews(propertyIds);
 
-  const items: PropertyItem[] = props.map((prop: any) => {
+  const items: PropertyItem[] = props.map((prop) => {
     let lowestPrice = 0;
     let isAvailable = false;
     if (prop.rooms?.length) {
       for (const room of prop.rooms) {
-        const blocked = hasDates && room.availabilities?.some((a: any) => !a.isAvailable);
+        const blocked = hasDates && room.availabilities?.some((a) => !a.isAvailable);
         if (!blocked) {
           lowestPrice = room.basePrice;
           isAvailable = true;

@@ -27,7 +27,7 @@ authRouter.patch('/auth/profile/:email/password', verifyToken, changePasswordHan
 
 authRouter.get('/auth/google/callback',
   (req, res, next) => {
-    passport.authenticate('google', { session: false }, (err: any, data: any, info: any) => {
+    passport.authenticate('google', { session: false }, (err: Error | null, data: { token: string; user: { email: string; role: string } } | null, info: { message?: string } | null) => {
       const sessionRole = req.session?.oauthRole || 'user';
       const intent = req.session?.oauthIntent || 'login';
       const frontend = process.env.FRONTEND_URL || 'http://localhost:5173';

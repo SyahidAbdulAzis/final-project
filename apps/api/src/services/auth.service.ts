@@ -61,7 +61,7 @@ function hideSecret<T extends { passwordHash?: string | null }>(account: T): Omi
 function signJwt(account: { id: string; email: string; role: string }) {
   return jwt.sign(
     { id: account.id, email: account.email, role: account.role },
-    process.env.JWT_SECRET || 'secret',
+    process.env.JWT_SECRET!,
     { expiresIn: '7d' }
   );
 }
@@ -131,6 +131,7 @@ export async function resetPassword(token: string, password: string) {
   const record = await validateToken(token, 'reset');
   const account = await findAccount(record.email);
   if (!account) throw new Error('Akun tidak ditemukan');
+  if (!account.passwordHash) throw new Error('Reset password hanya untuk akun registrasi email');
 
   const passwordHash = await hashPassword(password);
   await prisma.user.update({
