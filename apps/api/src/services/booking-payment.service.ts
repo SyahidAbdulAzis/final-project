@@ -75,11 +75,11 @@ export async function confirmPayment(bookingId: string, tenantId: string) {
     include: bookingUserRoomPaymentInclude,
   }) as any;
 
-  await sendPaymentConfirmationEmail(
+  sendPaymentConfirmationEmail(
     updatedBooking.user.email,
     updatedBooking.user.fullName,
     updatedBooking
-  );
+  ).catch((err) => console.error('Failed to send confirmation email:', err));
 
   return updatedBooking;
 }
@@ -112,11 +112,11 @@ export async function rejectPayment(bookingId: string, tenantId: string) {
     include: bookingUserRoomPaymentInclude,
   }) as any;
 
-  await sendPaymentRejectionEmail(
+  sendPaymentRejectionEmail(
     updatedBooking.user.email,
     updatedBooking.user.fullName,
     updatedBooking
-  );
+  ).catch((err) => console.error('Failed to send rejection email:', err));
 
   return updatedBooking;
 }
