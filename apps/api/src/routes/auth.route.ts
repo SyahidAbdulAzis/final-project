@@ -33,7 +33,8 @@ authRouter.get('/auth/google/callback',
       const frontend = process.env.FRONTEND_URL || 'http://localhost:5173';
 
       if (err || !data) {
-        const errorMsg = encodeURIComponent(info?.message || 'Autentikasi Google gagal');
+        console.error('Google OAuth callback error:', err?.message || info?.message || err);
+        const errorMsg = encodeURIComponent(info?.message || err?.message || 'Autentikasi Google gagal');
         const page = intent === 'register' ? 'register' : 'login';
         return res.redirect(`${frontend}/${page}/${sessionRole}?error=${errorMsg}`);
       }
