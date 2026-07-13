@@ -71,13 +71,12 @@ export async function getSuccessfulBookings(userId: string, page: number = 1, li
   params.append('page', page.toString());
   params.append('limit', limit.toString());
 
-  const { data } = await apiClient.get<{
-    bookings: BookingResponse[];
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-  }>(`/bookings/user/${userId}/successful?${params.toString()}`);
+  const { data } = await apiClient.get<any>(`/bookings/user/${userId}/successful?${params.toString()}`);
+
+  // Backward-compatible: handle both paginated object and plain array
+  if (Array.isArray(data)) {
+    return { bookings: data, total: data.length, page: 1, limit: data.length, totalPages: 1 };
+  }
   return data;
 }
 
