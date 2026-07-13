@@ -1,20 +1,47 @@
-import { Resend } from 'resend';
+import nodemailer from 'nodemailer';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const smtpTransporter = nodemailer.createTransport({
+  host: process.env.MAIL_HOST || 'sandbox.smtp.mailtrap.io',
+  port: Number(process.env.MAIL_PORT) || 2525,
+  auth: {
+    user: process.env.MAIL_USER || '',
+    pass: process.env.MAIL_PASS || '',
+  },
+});
 
 export async function sendEmail(to: string, subject: string, html: string) {
-  if (!process.env.RESEND_API_KEY) {
-    console.warn('[EMAIL] RESEND_API_KEY not set. Skipping email send.');
+  const useApi = !!process.env.MAILTRAP_API_KEY;
+  const from = process.env.MAIL_FROM || 'noreply@stayease.com';
+
+  if (useApi) {
+    const res = await fetch('https://send.api.mailtrap.io/api/send', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.MAILTRAP_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: { email: from, name: 'StayEase' },
+        to: [{ email: to }],
+        subject,
+        html,
+      }),
+    });
+    if (!res.ok) {
+      const err = await res.text();
+      console.error('[EMAIL] Mailtrap API error:', err);
+      throw new Error(`Mailtrap API error: ${err}`);
+    }
+    return { messageId: 'mailtrap-api', to, subject };
+  }
+
+  if (!process.env.MAIL_USER || !process.env.MAIL_PASS) {
+    console.warn('[EMAIL] MAIL_USER/MAIL_PASS not set. Skipping email send.');
     return { message: 'Email credentials not configured', to, subject };
   }
 
-  const info = await resend.emails.send({
-    from: `"StayEase" <${process.env.MAIL_FROM || 'noreply@stayease.com'}>`,
-    to,
-    subject,
-    html,
-  });
-  return { messageId: info.data?.id, to, subject };
+  const info = await smtpTransporter.sendMail({ from: `"StayEase" <${from}>`, to, subject, html });
+  return { messageId: info.messageId, to, subject };
 }
 
 export function verificationEmailTemplate(name: string, token: string) {
