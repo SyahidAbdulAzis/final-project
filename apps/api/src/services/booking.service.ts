@@ -161,24 +161,44 @@ export async function getBookingsByUserId(userId: string, page: number = 1, limi
   };
 }
 
-export async function getSuccessfulBookingsByUserId(userId: string) {
-  return await prisma.booking.findMany({
-    where: {
-      userId,
-      status: 'DIKONFIRMASI',
-    },
-    include: {
-      room: {
-        include: {
-          property: true,
-        },
+export async function getSuccessfulBookingsByUserId(userId: string, page: number = 1, limit: number = 5) {
+  const skip = (page - 1) * limit;
+
+  const [bookings, total] = await Promise.all([
+    prisma.booking.findMany({
+      where: {
+        userId,
+        status: 'DIKONFIRMASI',
       },
-      payment: true,
-    },
-    orderBy: {
-      createdAt: 'desc',
-    },
-  });
+      include: {
+        room: {
+          include: {
+            property: true,
+          },
+        },
+        payment: true,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+      skip,
+      take: limit,
+    }),
+    prisma.booking.count({
+      where: {
+        userId,
+        status: 'DIKONFIRMASI',
+      },
+    }),
+  ]);
+
+  return {
+    bookings,
+    total,
+    page,
+    limit,
+    totalPages: Math.ceil(total / limit),
+  };
 }
 
 export async function getBookingsByRoomId(roomId: string) {

@@ -143,10 +143,12 @@ export async function getTenantBookingsHandler(req: Request, res: Response) {
 
 export async function getSuccessfulBookingsHandler(req: Request, res: Response) {
   const userId = pickParam(req.params.userId);
+  const page = req.query.page ? parseInt(String(req.query.page)) : 1;
+  const limit = req.query.limit ? parseInt(String(req.query.limit)) : 5;
   if (!userId) return badRequest(res, 'UserId wajib diisi');
   try {
-    const bookings = await getSuccessfulBookingsByUserId(userId);
-    return res.json(bookings);
+    const result = await getSuccessfulBookingsByUserId(userId, page, limit);
+    return res.json(result);
   } catch (error) {
     return badRequest(res, (error as Error).message);
   }

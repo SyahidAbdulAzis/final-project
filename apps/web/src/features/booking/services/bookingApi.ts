@@ -66,8 +66,18 @@ export async function tenantCancelBooking(bookingId: string, tenantId: string) {
   return data;
 }
 
-export async function getSuccessfulBookings(userId: string) {
-  const { data } = await apiClient.get<BookingResponse[]>(`/bookings/user/${userId}/successful`);
+export async function getSuccessfulBookings(userId: string, page: number = 1, limit: number = 5) {
+  const params = new URLSearchParams();
+  params.append('page', page.toString());
+  params.append('limit', limit.toString());
+
+  const { data } = await apiClient.get<{
+    bookings: BookingResponse[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  }>(`/bookings/user/${userId}/successful?${params.toString()}`);
   return data;
 }
 

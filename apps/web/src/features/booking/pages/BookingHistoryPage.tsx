@@ -45,6 +45,9 @@ export function BookingHistoryPage() {
   const [bookings, setBookings] = useState<BookingResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
   const [selectedBooking, setSelectedBooking] = useState<BookingResponse | null>(null);
   const [showQRModal, setShowQRModal] = useState(false);
   const [review, setReview] = useState<ReviewState>({
@@ -70,16 +73,18 @@ export function BookingHistoryPage() {
     }
 
     setLoading(true);
-    getSuccessfulBookings(user.id)
-      .then((data) => {
-        setBookings(data);
+    getSuccessfulBookings(user.id, currentPage, 5)
+      .then((result) => {
+        setBookings(result.bookings);
+        setTotalPages(result.totalPages);
+        setTotal(result.total);
         setLoading(false);
       })
       .catch((err) => {
         setError(err instanceof Error ? err.message : 'Gagal memuat riwayat pemesanan');
         setLoading(false);
       });
-  }, [isAuthenticated, user, navigate, isLoading]);
+  }, [isAuthenticated, user, navigate, isLoading, currentPage]);
 
   useEffect(() => {
     if (!showQRModal || !selectedBooking) return;
@@ -276,6 +281,49 @@ export function BookingHistoryPage() {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 16, marginTop: 24, padding: 16 }}>
+            <button
+              onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+              style={{
+                padding: '10px 20px',
+                borderRadius: 8,
+                border: '1px solid var(--line)',
+                background: currentPage === 1 ? '#f5f5f5' : '#fff',
+                color: currentPage === 1 ? 'var(--muted)' : 'var(--text)',
+                fontSize: '0.9rem',
+                fontWeight: 600,
+                cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                transition: 'all 0.2s',
+              }}
+            >
+              Previous
+            </button>
+            <span style={{ fontSize: '0.9rem', color: 'var(--text)' }}>
+              Halaman {currentPage} dari {totalPages} ({total} total)
+            </span>
+            <button
+              onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+              disabled={currentPage === totalPages}
+              style={{
+                padding: '10px 20px',
+                borderRadius: 8,
+                border: '1px solid var(--line)',
+                background: currentPage === totalPages ? '#f5f5f5' : '#fff',
+                color: currentPage === totalPages ? 'var(--muted)' : 'var(--text)',
+                fontSize: '0.9rem',
+                fontWeight: 600,
+                cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                transition: 'all 0.2s',
+              }}
+            >
+              Next
+            </button>
           </div>
         )}
 
