@@ -77,6 +77,7 @@ export const roomsData: RoomSeed[] = [
   { propIndex: 15, name: 'Kemang Studio', desc: 'Trendy studio near cafes and galleries', price: 480000, guests: 2 },
   { propIndex: 16, name: 'Surf Shack', desc: 'Beachfront room with surfboard storage', price: 950000, guests: 4 },
   { propIndex: 17, name: 'Waterfall Cabin', desc: 'Cabin near waterfall with hiking access', price: 420000, guests: 3 },
+  { propIndex: 0, name: 'Sold Out Room', desc: 'Room yang sedang penuh dipesan', price: 500000, guests: 2 },
 ];
 
 export interface SeasonalRateSeed {
@@ -85,32 +86,43 @@ export interface SeasonalRateSeed {
 }
 
 export const seasonalRatesData: SeasonalRateSeed[] = [
-  { roomIndex: 0, name: 'Peak Season Jakarta', startDate: '2025-06-15', endDate: '2025-07-15', adjustmentType: 'PERCENTAGE', adjustmentValue: 25 },
-  { roomIndex: 1, name: 'Peak Season Jakarta', startDate: '2025-06-15', endDate: '2025-07-15', adjustmentType: 'PERCENTAGE', adjustmentValue: 25 },
-  { roomIndex: 3, name: 'Peak Season Bali', startDate: '2025-06-15', endDate: '2025-07-15', adjustmentType: 'PERCENTAGE', adjustmentValue: 30 },
-  { roomIndex: 4, name: 'Peak Season Bali', startDate: '2025-06-15', endDate: '2025-07-15', adjustmentType: 'PERCENTAGE', adjustmentValue: 30 },
-  { roomIndex: 5, name: 'Peak Season Bali', startDate: '2025-06-15', endDate: '2025-07-15', adjustmentType: 'PERCENTAGE', adjustmentValue: 30 },
-  { roomIndex: 3, name: 'Lebaran Special', startDate: '2025-03-25', endDate: '2025-04-05', adjustmentType: 'NOMINAL', adjustmentValue: 150000 },
-  { roomIndex: 4, name: 'Lebaran Special', startDate: '2025-03-25', endDate: '2025-04-05', adjustmentType: 'NOMINAL', adjustmentValue: 120000 },
-  { roomIndex: 10, name: 'Weekend Surcharge', startDate: '2025-07-04', endDate: '2025-07-06', adjustmentType: 'NOMINAL', adjustmentValue: 50000 },
-  { roomIndex: 11, name: 'Weekend Surcharge', startDate: '2025-07-04', endDate: '2025-07-06', adjustmentType: 'NOMINAL', adjustmentValue: 30000 },
-  { roomIndex: 17, name: 'Presidential Holiday', startDate: '2025-08-01', endDate: '2025-08-17', adjustmentType: 'PERCENTAGE', adjustmentValue: 15 },
-  { roomIndex: 18, name: 'Presidential Holiday', startDate: '2025-08-01', endDate: '2025-08-17', adjustmentType: 'PERCENTAGE', adjustmentValue: 15 },
-  { roomIndex: 20, name: 'Seminyak Peak', startDate: '2025-06-15', endDate: '2025-07-15', adjustmentType: 'PERCENTAGE', adjustmentValue: 35 },
-  { roomIndex: 21, name: 'Ciwidey Weekend', startDate: '2025-07-04', endDate: '2025-07-06', adjustmentType: 'NOMINAL', adjustmentValue: 75000 },
+  { roomIndex: 0, name: 'Peak Season Jakarta', startDate: '2026-06-15', endDate: '2026-07-31', adjustmentType: 'PERCENTAGE', adjustmentValue: 25 },
+  { roomIndex: 1, name: 'Peak Season Jakarta', startDate: '2026-06-15', endDate: '2026-07-31', adjustmentType: 'PERCENTAGE', adjustmentValue: 25 },
+  { roomIndex: 3, name: 'Peak Season Bali', startDate: '2026-06-15', endDate: '2026-07-31', adjustmentType: 'PERCENTAGE', adjustmentValue: 30 },
+  { roomIndex: 4, name: 'Peak Season Bali', startDate: '2026-06-15', endDate: '2026-07-31', adjustmentType: 'PERCENTAGE', adjustmentValue: 30 },
+  { roomIndex: 5, name: 'Peak Season Bali', startDate: '2026-06-15', endDate: '2026-07-31', adjustmentType: 'PERCENTAGE', adjustmentValue: 30 },
+  { roomIndex: 10, name: 'Weekend Surcharge', startDate: '2026-07-18', endDate: '2026-07-19', adjustmentType: 'NOMINAL', adjustmentValue: 50000 },
+  { roomIndex: 11, name: 'Weekend Surcharge', startDate: '2026-07-18', endDate: '2026-07-19', adjustmentType: 'NOMINAL', adjustmentValue: 30000 },
+  { roomIndex: 17, name: 'Presidential Holiday', startDate: '2026-08-01', endDate: '2026-08-17', adjustmentType: 'PERCENTAGE', adjustmentValue: 15 },
+  { roomIndex: 18, name: 'Presidential Holiday', startDate: '2026-08-01', endDate: '2026-08-17', adjustmentType: 'PERCENTAGE', adjustmentValue: 15 },
+  { roomIndex: 20, name: 'Seminyak Peak', startDate: '2026-06-15', endDate: '2026-07-31', adjustmentType: 'PERCENTAGE', adjustmentValue: 35 },
+  { roomIndex: 21, name: 'Ciwidey Weekend', startDate: '2026-07-18', endDate: '2026-07-19', adjustmentType: 'NOMINAL', adjustmentValue: 75000 },
 ];
 
 export interface BookingSeed {
   roomIndex: number; userIndex: number; checkInOffset: number; nights: number;
   status: 'MENUNGGU_PEMBAYARAN' | 'MENUNGGU_KONFIRMASI' | 'DIKONFIRMASI' | 'DIBATALKAN' | 'KADALUARSA' | 'CANCEL';
   hasPayment?: boolean; hasReview?: boolean; rating?: number; comment?: string;
+  tenantReply?: string;
 }
 
 export const bookingsData: BookingSeed[] = [
-  { roomIndex: 0, userIndex: 0, checkInOffset: -10, nights: 3, status: 'DIKONFIRMASI', hasPayment: true, hasReview: true, rating: 5, comment: 'Suite yang sangat nyaman, view kotanya bagus sekali!' },
+  // Booking selesai + sudah di-rating + tenant sudah balas
+  { roomIndex: 0, userIndex: 0, checkInOffset: -10, nights: 3, status: 'DIKONFIRMASI', hasPayment: true, hasReview: true, rating: 5, comment: 'Suite yang sangat nyaman, view kotanya bagus sekali!', tenantReply: 'Terima kasih atas kunjungannya, sampai jumpa lagi!' },
+  // Booking selesai + sudah di-rating + tenant belum balas
   { roomIndex: 1, userIndex: 1, checkInOffset: -5, nights: 2, status: 'DIKONFIRMASI', hasPayment: true, hasReview: true, rating: 4, comment: 'Lokasi strategis dekat pusat kota, recommended.' },
-  { roomIndex: 3, userIndex: 0, checkInOffset: 5, nights: 4, status: 'MENUNGGU_PEMBAYARAN', hasPayment: false },
-  { roomIndex: 4, userIndex: 1, checkInOffset: 7, nights: 2, status: 'MENUNGGU_KONFIRMASI', hasPayment: true },
-  { roomIndex: 10, userIndex: 0, checkInOffset: -3, nights: 1, status: 'KADALUARSA', hasPayment: false },
-  { roomIndex: 11, userIndex: 1, checkInOffset: 3, nights: 2, status: 'DIBATALKAN', hasPayment: false },
+  // Booking selesai + BELUM di-rating (simulasi: tinggal isi rating)
+  { roomIndex: 3, userIndex: 0, checkInOffset: -7, nights: 3, status: 'DIKONFIRMASI', hasPayment: true, hasReview: false },
+  // Booking selesai + BELUM di-rating (user 2)
+  { roomIndex: 5, userIndex: 1, checkInOffset: -4, nights: 2, status: 'DIKONFIRMASI', hasPayment: true, hasReview: false },
+  // Booking ongoing (check-in hari ini, checkout besok)
+  { roomIndex: 7, userIndex: 0, checkInOffset: 0, nights: 1, status: 'DIKONFIRMASI', hasPayment: true },
+  // Booking menunggu pembayaran (belum upload bukti)
+  { roomIndex: 4, userIndex: 1, checkInOffset: 7, nights: 2, status: 'MENUNGGU_PEMBAYARAN', hasPayment: false },
+  // Booking menunggu konfirmasi (sudah upload bukti, tenant belum konfirmasi)
+  { roomIndex: 10, userIndex: 0, checkInOffset: 5, nights: 3, status: 'MENUNGGU_KONFIRMASI', hasPayment: true },
+  // Booking kadaluarsa (tidak bayar dalam 2 jam)
+  { roomIndex: 11, userIndex: 1, checkInOffset: -3, nights: 1, status: 'KADALUARSA', hasPayment: false },
+  // Booking dibatalkan user
+  { roomIndex: 13, userIndex: 0, checkInOffset: 3, nights: 2, status: 'DIBATALKAN', hasPayment: false },
 ];

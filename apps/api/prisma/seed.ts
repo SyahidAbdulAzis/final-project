@@ -78,16 +78,17 @@ async function createRooms(propIds: string[]) {
 async function createAvailability(roomIds: string[]) {
   const today = new Date();
   const data: { roomId: string; date: Date; isAvailable: boolean }[] = [];
+  const lastIndex = roomIds.length - 1;
   for (let i = 0; i < 60; i++) {
     const date = new Date(today);
     date.setDate(date.getDate() + i);
-    for (const roomId of roomIds) {
-      const isAvailable = !(i >= 10 && i <= 14);
-      data.push({ roomId, date, isAvailable });
+    for (let j = 0; j < roomIds.length; j++) {
+      const isAvailable = j === lastIndex ? false : !(i >= 10 && i <= 14);
+      data.push({ roomId: roomIds[j], date, isAvailable });
     }
   }
   await prisma.roomAvailability.createMany({ data });
-  console.log('📅 Created room availability for 60 days (with 5 unavailable days per room)');
+  console.log('📅 Created room availability for 60 days (last room fully booked, 5 unavailable days for others)');
 }
 
 async function createSeasonalRates(roomIds: { id: string }[]) {
@@ -117,7 +118,16 @@ async function createBookings(roomIds: { id: string; price: number }[], userIds:
       await prisma.payment.create({ data: { bookingId: booking.id, proofUrl: 'https://images.unsplash.com/photo-1554224155-6726b1ffcb39?w=800' } });
     }
     if (b.hasReview && b.rating && b.comment) {
-      await prisma.review.create({ data: { bookingId: booking.id, userId: userIds[b.userIndex], rating: b.rating, comment: b.comment } });
+      await prisma.review.create({
+        data: {
+          bookingId: booking.id,
+          userId: userIds[b.userIndex],
+          rating: b.rating,
+          comment: b.comment,
+          tenantReply: b.tenantReply || null,
+          repliedAt: b.tenantReply ? new Date() : null,
+        },
+      });
     }
   }
   console.log(`� Created ${bookingsData.length} bookings (with payments & reviews)`);
