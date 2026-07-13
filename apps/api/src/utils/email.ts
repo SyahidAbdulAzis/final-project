@@ -1,26 +1,20 @@
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 
-const transporter = nodemailer.createTransport({
-  host: process.env.MAIL_HOST || 'sandbox.smtp.mailtrap.io',
-  port: Number(process.env.MAIL_PORT) || 2525,
-  auth: {
-    user: process.env.MAIL_USER || '',
-    pass: process.env.MAIL_PASS || '',
-  },
-});
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function sendEmail(to: string, subject: string, html: string) {
-  if (!process.env.MAIL_USER || !process.env.MAIL_PASS) {
-    console.warn('[EMAIL] Mailtrap credentials not set. Skipping email send.');
+  if (!process.env.RESEND_API_KEY) {
+    console.warn('[EMAIL] RESEND_API_KEY not set. Skipping email send.');
     return { message: 'Email credentials not configured', to, subject };
   }
-  const info = await transporter.sendMail({
+
+  const info = await resend.emails.send({
     from: `"StayEase" <${process.env.MAIL_FROM || 'noreply@stayease.com'}>`,
     to,
     subject,
     html,
   });
-  return { messageId: info.messageId, to, subject };
+  return { messageId: info.data?.id, to, subject };
 }
 
 export function verificationEmailTemplate(name: string, token: string) {

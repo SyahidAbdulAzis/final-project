@@ -1,5 +1,5 @@
 import cron from 'node-cron';
-import { expirePendingConfirmations } from '../services/booking.service.js';
+import { expirePendingConfirmations } from '../services/booking-payment.service.js';
 import { sendCheckInReminders } from '../services/email.service.js';
 
 export function setupScheduler() {

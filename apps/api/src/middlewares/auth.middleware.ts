@@ -18,7 +18,7 @@ export function verifyToken(req: Request, res: Response, next: NextFunction) {
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret') as { id: string; email: string; role: string };
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { id: string; email: string; role: string };
     req.user = decoded;
     next();
   } catch {

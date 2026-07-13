@@ -1,5 +1,4 @@
-// Email service for sending notifications using Nodemailer
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 
 export interface EmailOptions {
   to: string;
@@ -7,47 +6,22 @@ export interface EmailOptions {
   html: string;
 }
 
-// Create transporter using environment variables
-const createTransporter = () => {
-  const emailHost = process.env.MAIL_HOST || 'smtp.gmail.com';
-  const emailPort = parseInt(process.env.MAIL_PORT || '587');
-  const emailUser = process.env.MAIL_USER;
-  const emailPass = process.env.MAIL_PASS;
-  const emailFrom = process.env.MAIL_FROM || emailUser;
-
-  if (!emailUser || !emailPass) {
-    console.warn('Email credentials not configured. Emails will not be sent.');
-    return null;
-  }
-
-  return nodemailer.createTransport({
-    host: emailHost,
-    port: emailPort,
-    secure: emailPort === 465, // true for 465, false for other ports
-    auth: {
-      user: emailUser,
-      pass: emailPass,
-    },
-  });
-};
+const resend = new Resend(process.env.RESEND_API_KEY);
+const emailFrom = process.env.MAIL_FROM || 'noreply@stayease.com';
 
 export async function sendEmail(options: EmailOptions): Promise<void> {
-  const transporter = createTransporter();
-  
-  if (!transporter) {
+  if (!process.env.RESEND_API_KEY) {
+    console.warn('RESEND_API_KEY not configured. Emails will not be sent.');
     return;
   }
 
   try {
-    const emailFrom = process.env.MAIL_FROM || process.env.MAIL_USER;
-    
-    await transporter.sendMail({
+    await resend.emails.send({
       from: emailFrom,
       to: options.to,
       subject: options.subject,
       html: options.html,
     });
-    
   } catch (error) {
     console.error('Failed to send email:', error);
     throw error;

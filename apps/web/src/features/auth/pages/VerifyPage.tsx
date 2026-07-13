@@ -8,18 +8,7 @@ import { useAuth } from '../stores/AuthContext.js';
 import { Navbar } from '../../../components/common/Navbar.js';
 import { Footer } from '../../../components/common/Footer.js';
 import { PasswordInput } from '../../../components/common/PasswordInput.js';
-import type { User } from '../stores/AuthContext.js';
-
-function mapBackendUser(raw: any): User {
-  return {
-    id: raw.id ?? '',
-    name: raw.fullName ?? raw.name ?? '',
-    email: raw.email ?? '',
-    role: (raw.role?.toLowerCase() ?? 'user') as 'user' | 'tenant',
-    avatar: raw.photoUrl ?? raw.avatar ?? undefined,
-    isVerified: raw.isVerified ?? false,
-  };
-}
+import { mapBackendUser } from '../types/backendUser.js';
 
 export function VerifyPage() {
   const [searchParams] = useSearchParams();

@@ -27,13 +27,14 @@ authRouter.patch('/auth/profile/:email/password', verifyToken, changePasswordHan
 
 authRouter.get('/auth/google/callback',
   (req, res, next) => {
-    passport.authenticate('google', { session: false }, (err: any, data: any, info: any) => {
+    passport.authenticate('google', { session: false }, (err: Error | null, data: { token: string; user: { email: string; role: string } } | null, info: { message?: string } | null) => {
       const sessionRole = req.session?.oauthRole || 'user';
       const intent = req.session?.oauthIntent || 'login';
       const frontend = process.env.FRONTEND_URL || 'http://localhost:5173';
 
       if (err || !data) {
-        const errorMsg = encodeURIComponent(info?.message || 'Autentikasi Google gagal');
+        console.error('Google OAuth callback error:', err?.message || info?.message || err);
+        const errorMsg = encodeURIComponent(info?.message || err?.message || 'Autentikasi Google gagal');
         const page = intent === 'register' ? 'register' : 'login';
         return res.redirect(`${frontend}/${page}/${sessionRole}?error=${errorMsg}`);
       }

@@ -8,20 +8,24 @@ import {
 import {
   createBooking,
   getBookingById,
+  updateBooking,
+  deleteBooking,
+  cancelBooking,
+} from '../services/booking.service.js';
+import {
   getBookingsByUserId,
   getSuccessfulBookingsByUserId,
   getBookingsByRoomId,
   getBookingsByTenantId,
   getRoomAvailability,
-  updateBooking,
-  deleteBooking,
   getAllBookings,
+} from '../services/booking-query.service.js';
+import {
   submitManualPayment,
-  cancelBooking,
   confirmPayment,
   rejectPayment,
   tenantCancelBooking,
-} from '../services/booking.service.js';
+} from '../services/booking-payment.service.js';
 import { badRequest, parseOrBad, pickParam } from '../utils/controller.utils.js';
 
 export async function createBookingHandler(req: Request, res: Response) {
