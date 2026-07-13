@@ -57,8 +57,125 @@ export async function getBookingById(id: string) {
   return await prisma.booking.findUnique({
     where: { id },
     include: {
-      user: { select: { id: true, email: true, fullName: true, photoUrl: true } },
-      room: { include: { property: true } },
+      user: {
+        select: {
+          id: true,
+          email: true,
+          fullName: true,
+          photoUrl: true,
+        },
+      },
+      room: {
+        include: {
+          property: true,
+        },
+      },
+      payment: true,
+    },
+  });
+}
+
+export async function getBookingsByUserId(userId: string, page: number = 1, limit: number = 5) {
+  // First, check and update expired bookings
+  const oneHourInMs = 60 * 60 * 1000;
+  await prisma.booking.updateMany({
+    where: {
+      userId,
+      status: 'MENUNGGU_PEMBAYARAN',
+      createdAt: {
+        lt: new Date(Date.now() - oneHourInMs),
+      },
+    },
+    data: {
+      status: 'KADALUARSA',
+    },
+  });
+
+  const skip = (page - 1) * limit;
+
+  const [bookings, total] = await Promise.all([
+    prisma.booking.findMany({
+      where: { userId },
+      include: {
+        room: {
+          include: {
+            property: true,
+          },
+        },
+        payment: true,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+      skip,
+      take: limit,
+    }),
+    prisma.booking.count({
+      where: { userId },
+    }),
+  ]);
+
+  return {
+    bookings,
+    total,
+    page,
+    limit,
+    totalPages: Math.ceil(total / limit),
+  };
+}
+
+export async function getSuccessfulBookingsByUserId(userId: string, page: number = 1, limit: number = 5) {
+  const skip = (page - 1) * limit;
+
+  const [bookings, total] = await Promise.all([
+    prisma.booking.findMany({
+      where: {
+        userId,
+        status: 'DIKONFIRMASI',
+      },
+      include: {
+        room: {
+          include: {
+            property: true,
+          },
+        },
+        payment: true,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+      skip,
+      take: limit,
+    }),
+    prisma.booking.count({
+      where: {
+        userId,
+        status: 'DIKONFIRMASI',
+      },
+    }),
+  ]);
+
+  return {
+    bookings,
+    total,
+    page,
+    limit,
+    totalPages: Math.ceil(total / limit),
+  };
+}
+
+export async function getBookingsByRoomId(roomId: string) {
+  return await prisma.booking.findMany({
+    where: { roomId },
+    include: {
+      user: {
+        select: {
+          id: true,
+          email: true,
+          fullName: true,
+          photoUrl: true,
+        },
+      },
       payment: true,
     },
   });
