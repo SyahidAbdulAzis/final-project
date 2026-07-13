@@ -34,7 +34,17 @@ export async function replyToReview(reviewId: string, data: { reply: string }) {
   return response.data;
 }
 
-export async function getTenantReviews() {
-  const response = await apiClient.get<ReviewResponse[]>('/reviews/tenant/all');
-  return response.data;
+export async function getTenantReviews(page: number = 1, limit: number = 5) {
+  const params = new URLSearchParams();
+  params.append('page', page.toString());
+  params.append('limit', limit.toString());
+
+  const { data } = await apiClient.get<{
+    reviews: ReviewResponse[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  }>(`/reviews/tenant/all?${params.toString()}`);
+  return data;
 }

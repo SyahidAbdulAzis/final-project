@@ -35,18 +35,15 @@ export function PaymentPage() {
 
   useEffect(() => {
     if (!booking || booking.status !== 'MENUNGGU_PEMBAYARAN') return;
-    const oneHourInMs = 60 * 60 * 1000;
-    const elapsed = Date.now() - new Date(booking.createdAt).getTime();
-    setTimeRemaining(oneHourInMs - elapsed);
-  }, [booking]);
 
-  useEffect(() => {
-    if (!booking || booking.status !== 'MENUNGGU_PEMBAYARAN') return;
-    const interval = setInterval(() => {
+    const calc = () => {
       const remaining = 60 * 60 * 1000 - (Date.now() - new Date(booking.createdAt).getTime());
       setTimeRemaining(remaining);
       if (remaining <= 0) clearInterval(interval);
-    }, 1000);
+    };
+
+    calc();
+    const interval = setInterval(calc, 1000);
     return () => clearInterval(interval);
   }, [booking]);
 
