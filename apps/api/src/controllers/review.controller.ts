@@ -47,10 +47,12 @@ export async function replyToReviewHandler(req: AuthRequest, res: Response) {
 
 export async function getTenantReviewsHandler(req: AuthRequest, res: Response) {
   if (!req.user) return badRequest(res, 'Unauthorized');
+  const page = req.query.page ? parseInt(String(req.query.page)) : 1;
+  const limit = req.query.limit ? parseInt(String(req.query.limit)) : 5;
 
   try {
-    const reviews = await getTenantReviews(req.user.id);
-    return res.json(reviews);
+    const result = await getTenantReviews(req.user.id, page, limit);
+    return res.json(result);
   } catch (error) {
     return badRequest(res, (error as Error).message);
   }

@@ -77,7 +77,7 @@ export async function replyToReview(reviewId: string, tenantId: string, data: Re
   });
 }
 
-export async function getTenantReviews(tenantId: string) {
+export async function getTenantReviews(tenantId: string, page: number = 1, limit: number = 5) {
   const properties = await prisma.property.findMany({
     where: { tenantId },
     select: { id: true, name: true },
@@ -85,36 +85,51 @@ export async function getTenantReviews(tenantId: string) {
 
   const propertyIds = properties.map((p) => p.id);
 
-  if (propertyIds.length === 0) return [];
+  if (propertyIds.length === 0) return { reviews: [], total: 0, page, limit, totalPages: 0 };
 
-  const reviews = await prisma.review.findMany({
-    where: {
-      booking: {
-        room: {
-          propertyId: { in: propertyIds },
-        },
+  const where = {
+    booking: {
+      room: {
+        propertyId: { in: propertyIds },
       },
     },
-    include: {
-      user: {
-        select: { id: true, fullName: true, photoUrl: true },
-      },
-      booking: {
-        include: {
-          room: {
-            include: {
-              property: {
-                select: { id: true, name: true },
+  };
+
+  const skip = (page - 1) * limit;
+
+  const [reviews, total] = await Promise.all([
+    prisma.review.findMany({
+      where,
+      include: {
+        user: {
+          select: { id: true, fullName: true, photoUrl: true },
+        },
+        booking: {
+          include: {
+            room: {
+              include: {
+                property: {
+                  select: { id: true, name: true },
+                },
               },
             },
           },
         },
       },
-    },
-    orderBy: { createdAt: 'desc' },
-  });
+      orderBy: { createdAt: 'desc' },
+      skip,
+      take: limit,
+    }),
+    prisma.review.count({ where }),
+  ]);
 
-  return reviews;
+  return {
+    reviews,
+    total,
+    page,
+    limit,
+    totalPages: Math.ceil(total / limit),
+  };
 }
 
 export async function getPropertyWithReviews(propertyId: string) {
